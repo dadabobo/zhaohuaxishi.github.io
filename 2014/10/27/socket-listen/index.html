@@ -1,0 +1,736 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Linux Kernel,socket," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="概述
+前两篇文章中，我们已经分析了 socket API 中用来创建 socket 的 socket 函数和用来
+绑定地址的 bind 函数。正常到服务器程序在地址绑定之后就会在这个地址上开始监听等
+待链接，这一工作可以调用 listen 函数来完成，代码如下：
+1listen(server_fd, 10);
+这篇文章将要分析上面这条语句在内核中的具体实现流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="socket API 实现（三）—— listen 函数">
+<meta property="og:url" content="http://blog.guorongfei.com/2014/10/27/socket-listen/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="概述
+前两篇文章中，我们已经分析了 socket API 中用来创建 socket 的 socket 函数和用来
+绑定地址的 bind 函数。正常到服务器程序在地址绑定之后就会在这个地址上开始监听等
+待链接，这一工作可以调用 listen 函数来完成，代码如下：
+1listen(server_fd, 10);
+这篇文章将要分析上面这条语句在内核中的具体实现流程。">
+<meta property="og:image" content="http://blog.guorongfei.com/img/posts/apilisten.png">
+<meta property="og:image" content="http://blog.guorongfei.com/img/posts/request_sock_queue.png">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="socket API 实现（三）—— listen 函数">
+<meta name="twitter:description" content="概述
+前两篇文章中，我们已经分析了 socket API 中用来创建 socket 的 socket 函数和用来
+绑定地址的 bind 函数。正常到服务器程序在地址绑定之后就会在这个地址上开始监听等
+待链接，这一工作可以调用 listen 函数来完成，代码如下：
+1listen(server_fd, 10);
+这篇文章将要分析上面这条语句在内核中的具体实现流程。">
+<meta name="twitter:image" content="http://blog.guorongfei.com/img/posts/apilisten.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2014/10/27/socket-listen/"/>
+
+
+
+
+
+  <title> socket API 实现（三）—— listen 函数 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2014/10/27/socket-listen/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                socket API 实现（三）—— listen 函数
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2014-10-27T00:00:00+08:00">
+                2014-10-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="gai-shu">&#x6982;&#x8FF0;</h1>
+<p>&#x524D;&#x4E24;&#x7BC7;&#x6587;&#x7AE0;&#x4E2D;&#xFF0C;&#x6211;&#x4EEC;&#x5DF2;&#x7ECF;&#x5206;&#x6790;&#x4E86; socket API &#x4E2D;&#x7528;&#x6765;&#x521B;&#x5EFA; socket &#x7684; <code>socket</code> &#x51FD;&#x6570;&#x548C;&#x7528;&#x6765;
+&#x7ED1;&#x5B9A;&#x5730;&#x5740;&#x7684; <code>bind</code> &#x51FD;&#x6570;&#x3002;&#x6B63;&#x5E38;&#x5230;&#x670D;&#x52A1;&#x5668;&#x7A0B;&#x5E8F;&#x5728;&#x5730;&#x5740;&#x7ED1;&#x5B9A;&#x4E4B;&#x540E;&#x5C31;&#x4F1A;&#x5728;&#x8FD9;&#x4E2A;&#x5730;&#x5740;&#x4E0A;&#x5F00;&#x59CB;&#x76D1;&#x542C;&#x7B49;
+&#x5F85;&#x94FE;&#x63A5;&#xFF0C;&#x8FD9;&#x4E00;&#x5DE5;&#x4F5C;&#x53EF;&#x4EE5;&#x8C03;&#x7528; <code>listen</code> &#x51FD;&#x6570;&#x6765;&#x5B8C;&#x6210;&#xFF0C;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">listen(server_fd, <span class="number">10</span>);</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x7BC7;&#x6587;&#x7AE0;&#x5C06;&#x8981;&#x5206;&#x6790;&#x4E0A;&#x9762;&#x8FD9;&#x6761;&#x8BED;&#x53E5;&#x5728;&#x5185;&#x6838;&#x4E2D;&#x7684;&#x5177;&#x4F53;&#x5B9E;&#x73B0;&#x6D41;&#x7A0B;&#x3002;</p>
+<a id="more"></a>
+<h1 id="tu-jie">&#x56FE;&#x89E3;</h1>
+<p>&#x548C;&#x524D;&#x9762;&#x7684;&#x6587;&#x7AE0;&#x4E00;&#x6837;&#xFF0C;&#x6211;&#x4EEC;&#x9996;&#x5148;&#x770B;&#x770B;&#x51FD;&#x6570;&#x8C03;&#x7528;&#x5173;&#x7CFB;&#x7684;&#x56FE;&#x89E3;&#x3002;&#x5E26; <code>*</code> &#x7684;&#x51FD;&#x6570;&#x8868;&#x793A;&#x662F;&#x901A;&#x8FC7;&#x51FD;&#x6570;&#x6307;
+&#x9488;&#x5F15;&#x7528;&#x800C;&#x4E0D;&#x662F;&#x76F4;&#x63A5;&#x8C03;&#x7528;</p>
+<p><img src="/img/posts/apilisten.png" alt="listen &#x7CFB;&#x7EDF;&#x8C03;&#x7528;"></p>
+<p><code>listen</code> &#x51FD;&#x6570;&#x5230;&#x903B;&#x8F91;&#x6BD4; <code>socket</code> &#x548C; <code>bind</code> &#x5230;&#x51FD;&#x6570;&#x903B;&#x8F91;&#x8981;&#x7B80;&#x5355;&#x8BB8;&#x591A;&#x3002;
+<code>sockfd_lookup_light</code> &#x51FD;&#x6570;&#x5728; <code>bind</code> &#x51FD;&#x6570;&#x5230;&#x8BB2;&#x89E3;&#x4E2D;&#x63D0;&#x5230;&#x8FC7;&#xFF0C;&#x8FD9;&#x91CC;&#x4E0D;&#x518D;&#x91CD;&#x590D;&#x3002;&#x5982;&#x679C;&#x4F60;&#x4E0D;&#x662F;
+&#x4E86;&#x89E3;&#x5176;&#x4E2D;&#x5230;&#x673A;&#x5236;&#xFF0C;&#x53EF;&#x4EE5;&#x53C2;&#x8003;&#x6211;&#x7684;&#x53E6;&#x5916;&#x4E24;&#x7BC7;&#x6587;&#x7AE0; <a href="/2014/10/23/socket-create/" title="socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E00;&#xFF09;&#x2014;&#x2014; socket &#x51FD;&#x6570;">**socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E00;&#xFF09;&#x2014;&#x2014; socket &#x51FD;&#x6570;
+**</a> &#x548C; <a href="/2014/10/24/socket-bind/" title="socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;"><strong>socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;</strong></a>&#x3002;</p>
+<p>&#x8FD9;&#x7BC7;&#x6587;&#x7AE0;&#x5C06;&#x4F1A;&#x91CD;&#x70B9;&#x8BB2;&#x89E3; <code>inet_listen</code> &#x51FD;&#x6570;&#x548C; socket &#x4E2D;&#x548C;&#x76D1;&#x542C;&#x76F8;&#x5173;&#x7684;&#x6570;&#x636E;&#x7ED3;&#x6784;&#x3002;</p>
+<h1 id="lian-jie-qing-qiu-dui-lie">&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x961F;&#x5217;</h1>
+<p>&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x961F;&#x5217;&#x5206;&#x4E3A;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x548C;&#x5168;&#x94FE;&#x63A5;&#x961F;&#x5217;&#xFF0C;&#x8FD9;&#x4E24;&#x4E2A;&#x961F;&#x5217;&#x5904;&#x4E8E;&#x540C;&#x4E00;&#x4E2A;&#x7ED3;&#x6784;&#x4F53;&#x4E2D;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;
+<code>request_sock_quue</code> <code>inet_connection_sock</code> &#x7ED3;&#x6784;&#x7684; <code>icsk_accept_queue</code> &#x5B57;&#x6BB5;&#x5C31;&#x662F;&#x8FD9;
+&#x4E2A;&#x7C7B;&#x578B;&#xFF0C;&#x7528;&#x6765;&#x5B58;&#x50A8;&#x4E00;&#x4E2A; <code>sock</code> &#x7684;&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x3002;<code>request_sock_quue</code> &#x7684;&#x7ED3;&#x6784;&#x5B9A;&#x4E49;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> request_sock_queue {</div><div class="line">    <span class="keyword">struct</span> request_sock	*rskq_accept_head;</div><div class="line">    <span class="keyword">struct</span> request_sock	*rskq_accept_tail;</div><div class="line">    <span class="keyword">rwlock_t</span>		syn_wait_lock;</div><div class="line">    u8			rskq_defer_accept;</div><div class="line">    <span class="comment">/* 3 bytes hole, try to pack */</span></div><div class="line">    <span class="keyword">struct</span> listen_sock	*listen_opt;</div><div class="line">};</div></pre></td></tr></table></figure>
+<p>&#x5176;&#x4E2D;&#x524D;&#x9762;&#x4E24;&#x4E2A;&#x5B57;&#x6BB5;&#x7528;&#x6765;&#x5168;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#xFF0C;&#x800C;&#x6700;&#x540E;&#x4E00;&#x4E2A;&#x5B57;&#x6BB5;&#x7528;&#x6765;&#x5B58;&#x50A8;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x3002;&#x5168;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x662F;&#x968F;
+&#x7740;&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x4E0D;&#x65AD;&#x5230;&#x6765;&#x5E76;&#x4E14;&#x88AB;&#x5904;&#x7406;&#x4E4B;&#x540E;&#x624D;&#x9010;&#x6B65;&#x5EFA;&#x7ACB;&#x8D77;&#x6765;&#x7684;&#x3002;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x5219;&#x5728; <code>listen</code> &#x51FD;&#x6570;&#x4E2D;
+&#x521B;&#x5EFA;&#xFF0C;&#x56E0;&#x4E3A; <code>listen</code> &#x7684;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570; <code>backlog</code> &#x6307;&#x5B9A;&#x4E86;&#x540C;&#x65F6;&#x5141;&#x8BB8;&#x7684;&#x6700;&#x5927;&#x534A;&#x8FDE;&#x63A5;&#x72B6;&#x6001;&#x7684;&#x8FDE;&#x63A5;
+&#x6570;&#xFF0C;&#x4E5F;&#x5C31;&#x786E;&#x5B9A;&#x4E86;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x7684;&#x957F;&#x5EA6;&#xFF0C;&#x6BD4;&#x5982; <code>listen(fd, 10)</code> &#x4E2D;&#x7684; 10&#x3002;</p>
+<p>&#x5728; <code>inet_listen</code> &#x4E2D;&#x8C03;&#x7528;&#x4E86; <code>reqsk_queue_alloc</code> &#x51FD;&#x6570;&#x521B;&#x5EFA; sock &#x7684;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;
+&#x5206;&#x914D;&#x548C;&#x521D;&#x59CB;&#x5316; <code>listen_sock</code> &#x7ED3;&#x6784;&#x7A7A;&#x95F4;&#x3002;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">size_t</span> lopt_size = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> listen_sock);</div><div class="line"><span class="keyword">struct</span> listen_sock *lopt;</div><div class="line"></div><div class="line">nr_table_entries = <span class="keyword">min_t</span>(u32, nr_table_entries, sysctl_max_syn_backlog);</div><div class="line">nr_table_entries = <span class="keyword">max_t</span>(u32, nr_table_entries, <span class="number">8</span>);</div><div class="line">nr_table_entries = roundup_pow_of_two(nr_table_entries + <span class="number">1</span>);</div><div class="line">lopt_size += nr_table_entries * <span class="keyword">sizeof</span>(<span class="keyword">struct</span> request_sock *);</div><div class="line"><span class="keyword">if</span> (lopt_size &gt; PAGE_SIZE)</div><div class="line">    lopt = __vmalloc(lopt_size,</div><div class="line">        GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO,</div><div class="line">        PAGE_KERNEL);</div><div class="line"><span class="keyword">else</span></div><div class="line">    lopt = kzalloc(lopt_size, GFP_KERNEL);</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x6BB5;&#x4EE3;&#x7801;&#x6BD4;&#x8F83;&#x7684;&#x6666;&#x6DA9;&#xFF0C;&#x4E3B;&#x8981;&#x662F;&#x56E0;&#x4E3A; <code>listen_sock</code> &#x7ED3;&#x6784;&#x7684;&#x5B9A;&#x4E49;&#x975E;&#x5E38;&#x7684;&#x7075;&#x6D3B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> listen_sock {</div><div class="line">    ......</div><div class="line">    u32			nr_table_entries;</div><div class="line">    <span class="keyword">struct</span> request_sock	*syn_table[<span class="number">0</span>];</div><div class="line">};</div></pre></td></tr></table></figure>
+<p>&#x5728;&#x7ED3;&#x6784;&#x4F53;&#x5B9A;&#x4E49;&#x5230;&#x672B;&#x5C3E;&#x6709;&#x4E00;&#x4E2A;&#x96F6;&#x957F;&#x6570;&#x7EC4;&#xFF0C;&#x5F53;&#x6211;&#x4EEC;&#x5206;&#x914D;&#x7684;&#x7A7A;&#x95F4;&#x5927;&#x4E8E; <code>sizeof(struct listen_sock)</code> &#x7684;&#x65F6;&#x5019;&#xFF0C;<code>syn_table</code> &#x5B57;&#x6BB5;&#x4F1A;&#x6307;&#x5411;&#x8D85;&#x51FA;&#x7ED3;&#x6784;&#x4F53;&#x5927;&#x5C0F;&#x7A7A;&#x95F4;&#x7684;&#x7B2C;&#x4E00;&#x4E2A;&#x5B57;&#x8282;&#x3002;&#x5173;&#x4E8E;
+&#x96F6;&#x957F;&#x6570;&#x7EC4;&#x5230;&#x66F4;&#x591A;&#x4ECB;&#x7ECD;&#xFF0C;&#x53EF;&#x4EE5;&#x53C2;&#x8003;&#x6211;&#x5199;&#x7684;&#x53E6;&#x5916;&#x4E00;&#x7247;&#x6587;&#x7AE0; <a href="/2014/09/30/c-language-funny-usage/" title="C &#x8BED;&#x8A00;&#x7684;&#x8DA3;&#x5473;&#x7528;&#x6CD5;"><strong>C &#x8BED;&#x8A00;&#x7684;&#x8DA3;&#x5473;&#x7528;&#x6CD5;</strong></a>&#x3002;</p>
+<p>&#x5728;&#x4E0A;&#x9762;&#x5230;&#x7A7A;&#x95F4;&#x5206;&#x914D;&#x4EE3;&#x7801;&#x4E2D;&#xFF0C;<code>lopt_size</code> &#x9996;&#x5148;&#x662F; <code>sizeof(struct listen_sock)</code> &#x56E0;&#x4E3A;&#x5728;
+<code>request_sock_queue</code> &#x4E2D;&#x8868;&#x793A;&#x534A;&#x8FDE;&#x63A5;&#x961F;&#x5217;&#x7684; <code>listen_opt</code> &#x662F;&#x4E00;&#x4E2A;&#x6307;&#x9488;&#xFF0C;&#x5B83;&#x5230;&#x7A7A;&#x95F4;&#x6211;&#x4EEC;&#x4E5F;
+&#x8BB8;&#x8981;&#x5206;&#x914D;&#x3002;&#x4E4B;&#x540E; <code>lopt_size += nr_table_entries * sizeof(struct request_sock *);</code>
+&#x8868;&#x793A;&#x5728; <code>listen_sock</code> &#x7A7A;&#x95F4;&#x4E4B;&#x540E;&#x8FD8;&#x6709;&#x989D;&#x5916;&#x7684; <code>nr_table_entries * sizeof(struct request_sock *)</code> &#x7A7A;&#x95F4;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;&#x6211;&#x4EEC;&#x524D;&#x9762;&#x63D0;&#x5230;&#x7684; <code>syn_table</code> &#x6307;&#x5411;&#x7684;&#x7A7A;&#x95F4;&#x3002;</p>
+<p>&#x4ECE;&#x8FD9;&#x6BB5;&#x7A7A;&#x95F4;&#x5230;&#x5206;&#x914D;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x770B;&#x51FA;&#xFF0C;&#x6BCF;&#x4E00;&#x4E2A;&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x90FD;&#x662F;&#x4E00;&#x4E2A; <code>requset_sock</code> &#x7ED3;&#x6784;&#xFF0C;&#x534A;&#x8FDE;&#x63A5;
+&#x72B6;&#x6001;&#x7684; <code>request_sock</code> &#x7684;&#x6307;&#x9488;&#x5B58;&#x653E;&#x5728; <code>syn_table</code> &#x4E2D;&#xFF0C;&#x8FD9;&#x79CD;&#x8FDE;&#x63A5;&#x8BF7;&#x6C42;&#x6700;&#x90FD;&#x6709;
+<code>nr_table_entries</code> &#x4E2A;&#x3002;&#x5B83;&#x7684;&#x6700;&#x5927;&#x503C;&#x7531;&#x4E0B;&#x9762;&#x4E09;&#x4E2A;&#x4E2D;&#x7684;&#x6700;&#x5C0F;&#x503C;&#x51B3;&#x5B9A;&#xFF1A;&#x53C2;&#x6570; <code>backlog</code>&#xFF0C;
+<code>sysctl_max_syn_backlog</code> &#x53D8;&#x91CF;&#xFF0C; <code>sock_net(sock-&gt;sk)-&gt;core.sysctl_somaxconn</code>&#x3002;&#x5176;
+&#x4E2D; <code>backlog</code> &#x548C; <code>somaxconn</code> &#x7684;&#x6BD4;&#x8F83;&#x5728; <code>sys_listen</code> &#x4E2D;&#x5C31;&#x5DF2;&#x7ECF;&#x5B8C;&#x6210;&#x5E76;&#x628A;&#x8F83;&#x5C0F;&#x7684;&#x4E00;&#x4E2A;&#x4F5C;&#x4E3A;
+&#x53C2;&#x6570;&#x4F20;&#x9012;&#x7ED9;&#x4E86; <code>reqsk_queue_alloc</code>&#x3002;&#x5269;&#x4E0B;&#x4E24;&#x4E2A;&#x7684;&#x6BD4;&#x8F83;&#x5219;&#x5728;&#x524D;&#x9762;&#x7684;&#x5206;&#x914D;&#x4EE3;&#x7801;&#x4E2D;&#x5B8C;&#x6210;&#x3002;</p>
+<p>&#x5206;&#x914D;&#x7A7A;&#x95F4;&#x4E4B;&#x540E; <code>sock</code> &#x7684;&#x5185;&#x5B58;&#x7A7A;&#x95F4;&#x7ED3;&#x6784;&#x5927;&#x81F4;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><img src="/img/posts/request_sock_queue.png" alt="request_sock_queue"></p>
+<p><code>reqsk_queue_alloc</code> &#x51FD;&#x6570;&#x7684;&#x4E3B;&#x8981;&#x5DE5;&#x4F5C;&#x5C31;&#x662F;&#x5206;&#x914D;&#x4E0A;&#x56FE;&#x4E2D; <code>listen_sock</code> &#x7684;&#x7ED3;&#x6784;&#x7A7A;&#x95F4;&#x3002;</p>
+<h1 id="duan-kou-chong-yong">&#x7AEF;&#x53E3;&#x91CD;&#x7528;</h1>
+<p>&#x5728; <code>inet_listen_start</code> &#x4E2D;&#x4F1A;&#x8C03;&#x7528; <code>inet_csk_get_port</code> &#x51FD;&#x6570;&#x3002;&#x8FD9;&#x770B;&#x8D77;&#x6765;&#x4E0D;&#x53EF;&#x601D;&#x8BAE;&#xFF0C;&#x56E0;&#x4E3A;
+&#x7AEF;&#x53E3;&#x7ED1;&#x5B9A;&#x7684;&#x5DE5;&#x4F5C;&#x662F;&#x5728; <code>bind</code> &#x51FD;&#x6570;&#x4E2D;&#x8FDB;&#x884C;&#x7684;&#xFF0C;<code>inet_csk_get_port</code> &#x51FD;&#x6570;&#x6211;&#x4EEC;&#x5728; <a href="/2014/10/24/socket-bind/" title="socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;"><strong>socket
+API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;</strong></a> &#x4E00;&#x6587;&#x4E2D;&#x5DF2;&#x7ECF;&#x63D0;&#x8FC7;&#xFF0C;&#x8FD9;&#x91CC;&#x4E0D;&#x518D;&#x89E3;&#x91CA;&#x5B83;&#x7684;&#x4EE3;&#x7801;&#x3002;&#x6211;
+&#x770B;&#x8FC7;&#x7684;&#x8D44;&#x6599;&#x5927;&#x90E8;&#x5206;&#x90FD;&#x8BF4;&#x8FD9;&#x91CC;&#x8C03;&#x7528; <code>inet_csk_get_port</code> &#x662F;&#x4E3A;&#x4E86;&#x68C0;&#x67E5;&#x662F;&#x5426;&#x7ED1;&#x5B9A;&#x4E86;&#x7AEF;&#x53E3;&#xFF0C;&#x662F;&#x5426;
+&#x7AEF;&#x53E3;&#x5360;&#x7528;&#x7B49;&#x7B49;&#x3002;&#x4E2A;&#x4EBA;&#x8BA4;&#x4E3A;&#x8FD9;&#x4E9B;&#x8BF4;&#x6CD5;&#x90FD;&#x6709;&#x5931;&#x504F;&#x9887;&#x3002;</p>
+<p>&#x5176;&#x5B9E;&#x8FD9;&#x91CC;&#x8C03;&#x7528; <code>inet_listen_start</code> &#x4E3B;&#x8981;&#x662F;&#x6709;&#x4E24;&#x4E2A;&#x4F5C;&#x7528;&#x3002;&#x7B2C;&#x4E00;&#x5982;&#x679C;&#x6CA1;&#x6709;&#x7ED1;&#x5B9A;&#x7AEF;&#x53E3;&#xFF0C;&#x90A3;&#x4E48;&#x5148;
+&#x8FDB;&#x884C;&#x7AEF;&#x53E3;&#x7ED1;&#x5B9A;&#xFF0C;&#x5982;&#x679C;&#x7ED1;&#x5B9A;&#x4E86;&#x7AEF;&#x53E3;&#x5219;&#x9700;&#x8981;&#x66F4;&#x6539; <code>inet_bind_bucket</code> &#x4E2D;&#x7684; <code>fastreuse</code> &#x5B57;&#x6BB5;
+&#xFF0C;&#x628A;&#x4ED6;&#x8BBE;&#x7F6E;&#x6210;&#x5426;&#x5B9A;&#x503C;&#x3002;&#x8FD9;&#x4E2A;&#x5B57;&#x6BB5;&#x7684;&#x4F5C;&#x7528;&#x6211;&#x4EEC;&#x5728;<a href="/2014/10/24/socket-bind/" title="socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;">**socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;
+**</a> &#x4E00;&#x6587;&#x4E2D;&#x5DF2;&#x7ECF;&#x89E3;&#x91CA;&#x8FC7;&#xFF0C;&#x5728; <code>inet_csk_start_listen</code> &#x4E2D;&#x8BBE;&#x7F6E;&#x4E86; <code>sock_state</code>
+&#x4E3A; <code>TCP_LISTEN</code> &#x72B6;&#x6001;&#xFF0C;&#x8FD9;&#x5C31;&#x4F7F;&#x5F97;&#x7AEF;&#x53E3;&#x53EF;&#x91CD;&#x7528;&#x7684;&#x7B2C;&#x4E8C;&#x4E2A;&#x5224;&#x65AD;&#x6761;&#x4EF6;&#x4E0D;&#x6210;&#x7ACB;&#x4E86;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;&#x8BF4;
+<code>fastreuse</code> &#x5B57;&#x6BB5;&#x5931;&#x6548;&#x3002;&#x8C03;&#x7528; <code>inet_csk_get_port</code> &#x51FD;&#x6570;&#x53EF;&#x4EE5;&#x8BA9;&#x53EF;&#x91CD;&#x7528;&#x518D;&#x6B21;&#x5F97;&#x5230;&#x4FEE;&#x6B63;&#x3002;&#x4EE5;
+&#x4E0B;&#x662F;&#x7B80;&#x5316;&#x7684;&#x4EE3;&#x7801;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (!snum) {</div><div class="line">    ......</div><div class="line">} <span class="keyword">else</span> {</div><div class="line">    ......</div><div class="line">    inet_bind_bucket_for_each(tb, node, &amp;head-&gt;chain)</div><div class="line">        <span class="keyword">if</span> (ib_net(tb) == net &amp;&amp; tb-&gt;port == snum)</div><div class="line">            <span class="keyword">goto</span> tb_found;                                      (<span class="number">1</span>)</div><div class="line">}</div><div class="line"></div><div class="line">tb_found:                                                       (<span class="number">2</span>)</div><div class="line"></div><div class="line"><span class="keyword">if</span> (!hlist_empty(&amp;tb-&gt;owners)) {</div><div class="line">    <span class="keyword">if</span> (... &amp;&amp; sk-&gt;sk_state != TCP_LISTEN ) {</div><div class="line">        ......</div><div class="line">    } <span class="keyword">else</span> {</div><div class="line">        <span class="keyword">if</span> (inet_csk(sk)-&gt;icsk_af_ops-&gt;bind_conflict(sk, tb)) { (<span class="number">3</span>)</div><div class="line">            ......</div><div class="line">        }</div><div class="line">    }</div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">if</span> (!tb &amp;&amp; ...) == <span class="literal">NULL</span>)</div><div class="line">    ......</div><div class="line"><span class="keyword">if</span> (hlist_empty(&amp;tb-&gt;owners)) {</div><div class="line">    ....</div><div class="line">} <span class="keyword">else</span> <span class="keyword">if</span> (tb-&gt;fastreuse &amp;&amp;</div><div class="line">       (!sk-&gt;sk_reuse || sk-&gt;sk_state == TCP_LISTEN))</div><div class="line">    tb-&gt;fastreuse = <span class="number">0</span>;                                          (<span class="number">4</span>)</div></pre></td></tr></table></figure>
+<p>&#x5982;&#x679C;&#x5730;&#x5740;&#x5DF2;&#x7ECF;&#x7ED1;&#x5B9A;&#xFF0C;&#x90A3;&#x4E48;&#x6700;&#x5F00;&#x59CB;&#x7684;&#x5224;&#x65AD; <code>!sum</code> &#x4E0D;&#x6210;&#x7ACB;&#x6240;&#x4EE5;&#x6267;&#x884C; <code>else</code>&#xFF08;1&#xFF09;&#x3002;&#x56E0;&#x4E3A;&#x5730;&#x5740;&#x5DF2;
+&#x7ECF;&#x7ED1;&#x5B9A;&#x4E86;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x627E;&#x5230; <code>inet_bind_bucket</code> &#x7ED3;&#x6784;&#xFF0C;&#x8DF3;&#x5230; <code>tb_found:</code>&#xFF08;2&#xFF09;&#x3002;&#x4EE5;&#x4E3A;&#x5DF2;&#x7ECF;&#x7ED1;
+&#x5B9A;&#x5730;&#x5740;&#x6240;&#x4EE5; <code>tb-&gt;owners</code> &#x4E0D;&#x4F1A;&#x4E3A;&#x7A7A;&#xFF08;&#x7ED1;&#x5B9A;&#x7684;&#x65F6;&#x5019;&#x8C03;&#x7528; <code>inet_bind_hash</code> &#x4F1A;&#x628A; <code>sk</code> &#x6DFB;&#x52A0;
+&#x5230; <code>tb-&gt;owners</code> &#x4E2D;&#xFF09;&#xFF0C;&#x6240;&#x4EE5;&#x63A5;&#x4E0B;&#x6765;&#x7684; <code>if</code> &#x4E2D;&#x4F1A;&#x5224;&#x65AD;&#x662F;&#x5426;&#x5730;&#x5740;&#x51B2;&#x7A81;&#xFF0C;&#x5982;&#x679C;&#x4E4B;&#x540E;&#x81EA;&#x5DF1;&#x5728;
+<code>owners</code> &#x961F;&#x5217;&#x4E2D;&#x7684;&#x8BDD;&#x4E0D;&#x4F1A;&#x51B2;&#x7A81;&#xFF08;3&#xFF09;&#x7684;&#x5224;&#x65AD;&#x4E3A;&#x5047;&#x4E0D;&#x4F1A;&#x6267;&#x884C;&#x3002;&#x6240;&#x4EE5;&#x6700;&#x540E;&#x7684;&#x6D41;&#x7A0B;&#x5230;&#xFF08;4&#xFF09;&#x8BBE;&#x7F6E;
+<code>fastreuse</code> &#x4E3A;&#x5047;&#x3002;</p>
+<p>&#x6240;&#x4EE5;&#x4ECE;&#x4E0A;&#x9762;&#x7684;&#x4EE3;&#x7801;&#x6765;&#x770B;&#xFF0C; &#x5728; <code>inet_csk_start_listen</code> &#x4E2D;&#x8C03;&#x7528; <code>inet_csk_get_port</code> &#x4E3B;
+&#x8981;&#x4F5C;&#x7528;&#x6709;&#x4E09;&#x70B9;&#xFF1A;</p>
+<ol>
+<li>
+<p>&#x5982;&#x679C;&#x6CA1;&#x6709;&#x7ED1;&#x5B9A;&#x7AEF;&#x53E3;&#xFF0C;&#x5148;&#x7ED1;&#x5B9A;&#x7AEF;&#x53E3;</p>
+</li>
+<li>
+<p>&#x5982;&#x679C;&#x7AEF;&#x53E3;&#x5DF2;&#x7ECF;&#x7ED1;&#x5B9A;&#x68C0;&#x67E5;&#x662F;&#x5426;&#x6709;&#x51B2;&#x7A81;</p>
+</li>
+<li>
+<p>&#x5982;&#x679C;&#x6CA1;&#x6709;&#x51B2;&#x7A81;&#x628A;&#x7AEF;&#x53E3;&#x53EF;&#x91CD;&#x7528;&#x7684;&#x5224;&#x65AD;&#x6807;&#x5FD7;&#x8BBE;&#x7F6E;&#x4E3A;&#x5426;</p>
+</li>
+</ol>
+<h1 id="jia-ru-jian-ting-ha-xi-biao">&#x52A0;&#x5165;&#x76D1;&#x542C;&#x54C8;&#x5E0C;&#x8868;</h1>
+<p>&#x5728; <a href="/2014/10/24/socket-bind/" title="socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;"><strong>socket API &#x5B9E;&#x73B0;&#xFF08;&#x4E8C;&#xFF09;&#x2014;&#x2014; bind &#x51FD;&#x6570;</strong></a> &#x4E00;&#x6587;&#x4E2D;&#x6211;&#x4EEC;&#x8BF4;&#x8FC7;&#xFF0C;&#x4E3A;&#x4E86;&#x5FEB;&#x901F;&#x7684;&#x627E;
+&#x5230; sock &#x7ED3;&#x6784;&#xFF0C;&#x5185;&#x6838;&#x8BBE;&#x7F6E;&#x4E86;&#x4E09;&#x4E2A;&#x54C8;&#x5E0C;&#x8868;&#xFF0C;&#x8FD9;&#x4E09;&#x4E2A;&#x54C8;&#x5E0C;&#x8868;&#x5728;&#x540C;&#x4E00;&#x4E2A;&#x7ED3;&#x6784; <code>inet_hashinfo</code> &#x4E4B;
+&#x4E2D;&#x3002;&#x548C;&#x4E0A;&#x4E00;&#x7BC7;&#x6587;&#x7AE0;&#x4E3B;&#x9898;&#x2014;&#x2014;&#x7ED1;&#x5B9A;&#x76F8;&#x5173;&#x7684;&#x54C8;&#x5E0C;&#x8868;&#x662F; <code>bhash</code> &#x5B57;&#x6BB5;&#xFF0C;&#x800C;&#x548C;&#x8FD9;&#x7BC7;&#x6587;&#x7AE0;&#x7684;&#x4E3B;&#x9898;&#x2014;&#x2014;&#x76D1;&#x542C;
+&#x76F8;&#x5173;&#x7684;&#x54C8;&#x5E0C;&#x8868;&#x662F; <code>listening_hash</code> &#x51FD;&#x6570;&#x8C03;&#x7528;&#x5173;&#x7CFB;&#x56FE;&#x4E2D;&#x7684;&#x6700;&#x540E;&#x4E00;&#x4E2A;&#x51FD;&#x6570; <code>inet_hash</code> &#x5C31;&#x662F;
+&#x7528;&#x6765;&#x628A; <code>sock</code> &#x52A0;&#x5165;&#x5230; <code>listening_hash</code> &#x961F;&#x5217;&#x4E2D;&#x53BB;&#x7684;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (sk-&gt;sk_state != TCP_LISTEN) {</div><div class="line">    __inet_hash_nolisten(sk);</div><div class="line">    <span class="keyword">return</span>;</div><div class="line">}</div><div class="line"></div><div class="line">ilb = &amp;hashinfo-&gt;listening_hash[inet_sk_listen_hashfn(sk)];</div><div class="line">__sk_nulls_add_node_rcu(sk, &amp;ilb-&gt;head);</div></pre></td></tr></table></figure>
+<p>&#x5728;&#x300A;&#x8FFD;&#x8E2A; Linux TCP/IP &#x4EE3;&#x7801;&#x8FD0;&#x884C;&#x300B;&#x4E00;&#x4E66;&#x7684;&#x7B2C;&#x4E03;&#x7AE0; 242 &#x9875;&#x4E2D;&#x5206;&#x6790; <code>__inet_hash_nolisten</code>
+&#x7684;&#x8FD0;&#x884C;&#x663E;&#x7136;&#x725B;&#x5934;&#x4E0D;&#x5BF9;&#x9A6C;&#x5634;&#x3002;&#x56E0;&#x4E3A;&#x6B64;&#x65F6; <code>sk-&gt;sk_state == TCP_LISTEN</code>&#x3002;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x4F5C;&#x7528;&#x5176;
+&#x5B9E;&#x662F;&#x627E;&#x6253;&#x8BE5; sock &#x5BF9;&#x5E94;&#x7684;&#x54C8;&#x5E0C;&#x6876;&#xFF08;ilb&#xFF09;&#xFF0C;&#x7136;&#x540E;&#x628A;&#x8FD9;&#x4E2A; sock &#x94FE;&#x63A5;&#x5230;&#x8FD9;&#x4E2A;&#x54C8;&#x5E0C;&#x6876;&#x7684;&#x54C8;&#x5E0C;&#x94FE;&#x4E2D;
+&#x3002; <code>struct sock</code> &#x4E2D;&#x5BF9;&#x5E94;&#x7684; <code>sk_nulls_node</code> &#x5B57;&#x6BB5;&#x88AB;&#x7528;&#x6765;&#x94FE;&#x63A5;&#x8FD9;&#x4E2A;&#x54C8;&#x5E0C;&#x94FE;&#xFF0C;&#x4F46;&#x662F;&#x5185;&#x6838;&#x7684;&#x4EE3;
+&#x7801;&#x4E2D;&#x8BF4;&#x662F;&#x63D0;&#x4F9B;&#x7ED9; <code>udp/udp-lite</code> &#x534F;&#x8BAE;&#x4F3C;&#x4E4E;&#x6709;&#x70B9;&#x8BEF;&#x5BFC;&#x7684;&#x5ACC;&#x7591;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">*	@skc_nulls_node: main hash linkage <span class="keyword">for</span> UDP/UDP-Lite protocol</div><div class="line"><span class="keyword">struct</span> sock_common {</div><div class="line">    <span class="keyword">union</span> {</div><div class="line">        <span class="keyword">struct</span> hlist_node	skc_node;</div><div class="line">        <span class="keyword">struct</span> hlist_nulls_node skc_nulls_node;</div><div class="line">    };</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">struct</span> sock {</div><div class="line">    <span class="keyword">struct</span> sock_common	__sk_common;</div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> sk_nulls_node		__sk_common.skc_nulls_node</span></div><div class="line">};</div></pre></td></tr></table></figure>
+<p>&#x4ECE;&#x4E0A;&#x9762;&#x7684;&#x4EE3;&#x7801;&#x53EF;&#x4EE5;&#x770B;&#x51FA; <code>sock</code> &#x7684; <code>sk_nulls_node</code> &#x6765;&#x81EA; <code>sock_common</code>&#xFF0C;&#x800C;
+<code>sock_common</code> &#x5BF9;&#x4E8E; <code>skc_nulls_node</code> &#x7684;&#x6CE8;&#x91CA;&#x8BF4;&#x5B83;&#x662F;&#x63D0;&#x4F9B;&#x7ED9; <code>udp/udp-lite</code> &#x534F;&#x8BAE;&#x4F7F;&#x7528;&#x7684;
+&#x3002;</p>
+<hr>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux-Kernel/" rel="tag"># Linux Kernel</a>
+          
+            <a href="/tags/socket/" rel="tag"># socket</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/10/24/socket-bind/" rel="next" title="socket API 实现（二）—— bind 函数">
+                <i class="fa fa-chevron-left"></i> socket API 实现（二）—— bind 函数
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/10/29/socket-accept/" rel="prev" title="socket API 实现（四）—— accept 函数">
+                socket API 实现（四）—— accept 函数 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gai-shu"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tu-jie"><span class="nav-number">2.</span> <span class="nav-text">图解</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#lian-jie-qing-qiu-dui-lie"><span class="nav-number">3.</span> <span class="nav-text">连接请求队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#duan-kou-chong-yong"><span class="nav-number">4.</span> <span class="nav-text">端口重用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#jia-ru-jian-ting-ha-xi-biao"><span class="nav-number">5.</span> <span class="nav-text">加入监听哈希表</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

@@ -1,0 +1,673 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="构造函数和虚拟函数之间存在许多比较微妙的关系，比如构造函数不能是虚拟函数，构造函
+数不能正常调用虚拟函数等等，本文将会讨论产生这些问题的原因。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++中构造函数和虚拟函数的微妙关系">
+<meta property="og:url" content="http://blog.guorongfei.com/2016/01/18/constructor-virtual/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="构造函数和虚拟函数之间存在许多比较微妙的关系，比如构造函数不能是虚拟函数，构造函
+数不能正常调用虚拟函数等等，本文将会讨论产生这些问题的原因。">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++中构造函数和虚拟函数的微妙关系">
+<meta name="twitter:description" content="构造函数和虚拟函数之间存在许多比较微妙的关系，比如构造函数不能是虚拟函数，构造函
+数不能正常调用虚拟函数等等，本文将会讨论产生这些问题的原因。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2016/01/18/constructor-virtual/"/>
+
+
+
+
+
+  <title> C++中构造函数和虚拟函数的微妙关系 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2016/01/18/constructor-virtual/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                C++中构造函数和虚拟函数的微妙关系
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-01-18T16:33:19+08:00">
+                2016-01-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#x6784;&#x9020;&#x51FD;&#x6570;&#x548C;&#x865A;&#x62DF;&#x51FD;&#x6570;&#x4E4B;&#x95F4;&#x5B58;&#x5728;&#x8BB8;&#x591A;&#x6BD4;&#x8F83;&#x5FAE;&#x5999;&#x7684;&#x5173;&#x7CFB;&#xFF0C;&#x6BD4;&#x5982;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E0D;&#x80FD;&#x662F;&#x865A;&#x62DF;&#x51FD;&#x6570;&#xFF0C;&#x6784;&#x9020;&#x51FD;
+&#x6570;&#x4E0D;&#x80FD;&#x6B63;&#x5E38;&#x8C03;&#x7528;&#x865A;&#x62DF;&#x51FD;&#x6570;&#x7B49;&#x7B49;&#xFF0C;&#x672C;&#x6587;&#x5C06;&#x4F1A;&#x8BA8;&#x8BBA;&#x4EA7;&#x751F;&#x8FD9;&#x4E9B;&#x95EE;&#x9898;&#x7684;&#x539F;&#x56E0;&#x3002;</p>
+<a id="more"></a>
+<h1 id="gou-zao-han-shu-wei-shi-me-bu-neng-shi-xu-ni-han-shu">&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E3A;&#x4EC0;&#x4E48;&#x4E0D;&#x80FD;&#x662F;&#x865A;&#x62DF;&#x51FD;&#x6570;</h1>
+<p>&#x6784;&#x9020;&#x51FD;&#x6570;&#x548C;&#x6790;&#x6784;&#x51FD;&#x6570;&#x5728;&#x8BBE;&#x8BA1;&#x4E4B;&#x521D;&#x5C31;&#x662F;&#x6210;&#x5BF9;&#x51FA;&#x73B0;&#x7684;&#xFF0C;&#x4ED6;&#x4EEC;&#x662F;&#x4E00;&#x79CD;&#x5BF9;&#x79F0;&#x5173;&#x7CFB;&#xFF1A;&#x6784;&#x9020;&#x5206;&#x914D;&#x8D44;&#x6E90;&#xFF0C;&#x6790;
+&#x6784;&#x91CA;&#x653E;&#x8D44;&#x6E90;&#xFF1B;&#x6784;&#x9020;&#x7528;&#x6765;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x6790;&#x6784;&#x7528;&#x6765;&#x6E05;&#x7406;&#x3002;&#x4F46;&#x662F;&#x73B0;&#x5728;&#x6709;&#x4E00;&#x4E2A;&#x70B9;&#x4ED6;&#x4EEC;&#x6781;&#x4E0D;&#x5BF9;&#x79F0;&#xFF1A;</p>
+<ul>
+<li>&#x6790;&#x6784;&#x901A;&#x5E38;&#x662F;&#x865A;&#x51FD;&#x6570;</li>
+<li>&#x6784;&#x9020;&#x4E0D;&#x80FD;&#x662F;&#x865A;&#x51FD;&#x6570;</li>
+</ul>
+<p><strong>&#x6784;&#x9020;&#x548C;&#x6790;&#x6784;&#x7684;&#x53E6;&#x4E00;&#x4E2A;&#x4E0D;&#x5BF9;&#x79F0;&#x7684;&#x5730;&#x65B9;&#x662F;&#x5F02;&#x5E38;&#x5904;&#x7406;&#xFF0C;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E2D;&#x51FA;&#x9519;&#x53EA;&#x80FD;&#x629B;&#x51FA;&#x5F02;&#x5E38;&#xFF0C;&#x4F46;&#x662F;&#x6790;
+&#x6784;&#x51FD;&#x6570;&#x4E2D;&#x4E0D;&#x5141;&#x8BB8;&#x629B;&#x51FA;&#x5F02;&#x5E38;</strong></p>
+<h2 id="tong-chang-sheng-ming-cheng-xu-han-shu-de-xi-gou-han-shu">&#x901A;&#x5E38;&#x58F0;&#x660E;&#x6210;&#x865A;&#x51FD;&#x6570;&#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;</h2>
+<p>&#x5173;&#x4E8E;&#x6790;&#x6784;&#x901A;&#x5E38;&#x662F;&#x865A;&#x51FD;&#x6570;&#x7684;&#x95EE;&#x9898;&#xFF0C;&#x5728; &#x300A;Effective C++&#x300B;&#x4E00;&#x4E66;&#x4E2D;&#x6709;&#x8BA8;&#x8BBA;&#xFF0C;&#x539F;&#x56E0;&#x5F88;&#x7B80;&#x5355;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Base { <span class="comment">// &#x57FA;&#x7C7B;&#x516C;&#x5171;&#x8D44;&#x6E90; };</span></div><div class="line"><span class="keyword">class</span> Sub : <span class="keyword">public</span> Base { <span class="comment">// &#x5B50;&#x7C7B;&#x81EA;&#x5DF1;&#x7684;&#x8D44;&#x6E90; };</span></div></pre></td></tr></table></figure>
+<p>&#x4E3A;&#x4E86;&#x80FD;&#x591F;&#x8FDB;&#x884C;&#x591A;&#x6001;&#x7684;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#xFF0C;&#x6211;&#x4EEC;&#x9700;&#x8981;&#x901A;&#x8FC7;&#x57FA;&#x7C7B;&#x6307;&#x9488;&#x6307;&#x5411;&#x5B50;&#x7C7B;&#x7684;&#x5BF9;&#x8C61;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Base* base = <span class="keyword">new</span> Sub;</div></pre></td></tr></table></figure>
+<p>&#x90A3;&#x4E48;&#x95EE;&#x9898;&#x6765;&#x4E86;&#xFF0C;&#x5F53;&#x6211;&#x4EEC;&#x8C03;&#x7528;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">delete</span> base;</div></pre></td></tr></table></figure>
+<p>&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5047;&#x5982; Base &#x6CA1;&#x6709;&#x628A;&#x6790;&#x6784;&#x51FD;&#x6570;&#x58F0;&#x660E;&#x6210;&#x865A;&#x51FD;&#x6570;&#xFF0C;&#x90A3;&#x4E48;&#x5B83;&#x4F1A;&#x76F4;&#x63A5;&#x8C03;&#x7528; Base &#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;&#xFF08;
+&#x8FD9;&#x4E00;&#x70B9;&#x5728;&#x7F16;&#x8BD1;&#x7684;&#x65F6;&#x5019;&#x5C31;&#x5DF2;&#x7ECF;&#x786E;&#x5B9A;&#x4E86;&#xFF09;&#xFF0C;&#x90A3;&#x4E48; Sub &#x4E2D;&#x5206;&#x914D;&#x7684;&#x5B50;&#x7C7B;&#x8D44;&#x6E90;&#x5F97;&#x4E0D;&#x5230;&#x91CA;&#x653E;&#x8FD9;&#x5C31;&#x9020;&#x6210;&#x4E86;
+&#x8D44;&#x6E90;&#x6CC4;&#x9732;&#x3002;&#x5982;&#x679C; Base &#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;&#x662F;&#x865A;&#x51FD;&#x6570;&#xFF0C;&#x90A3;&#x4E48;&#x5B83;&#x5B9E;&#x9645;&#x4E0A;&#x4F1A;&#x8C03;&#x7528;&#x5230;&#x5B50;&#x7C7B;&#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;&#xFF0C;&#x800C;&#x5B50;
+&#x7C7B;&#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;&#x4F1A;&#x81EA;&#x52A8;&#x8C03;&#x7528;&#x57FA;&#x7C7B;&#x7684;&#x6790;&#x6784;&#x51FD;&#x6570;&#xFF0C;&#x6700;&#x7EC8;&#x4F7F;&#x5F97;&#x57FA;&#x7C7B;&#x548C;&#x5B50;&#x7C7B;&#x7684;&#x8D44;&#x6E90;&#x90FD;&#x4F1A;&#x5F97;&#x5230;&#x91CA;&#x653E;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Sub::~Sub() {</div><div class="line">    <span class="keyword">this</span>-&gt;Base::~Base(); <span class="comment">// &#x7F16;&#x8BD1;&#x5668;&#x5B89;&#x63D2;&#x4EE3;&#x7801;&#x3002;</span></div><div class="line">}</div></pre></td></tr></table></figure>
+<h2 id="bu-neng-sheng-ming-cheng-xu-han-shu-de-gou-zao-han-shu">&#x4E0D;&#x80FD;&#x58F0;&#x660E;&#x6210;&#x865A;&#x51FD;&#x6570;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;</h2>
+<p>&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E0D;&#x80FD;&#x662F;&#x865A;&#x51FD;&#x6570;&#x7684;&#x539F;&#x56E0;&#x5F88;&#x7B80;&#x5355;&#xFF0C;&#x8FD9;&#x662F;&#x4E00;&#x4E2A;&#x9E21;&#x751F;&#x86CB;&#xFF0C;&#x86CB;&#x751F;&#x9E21;&#x7684;&#x95EE;&#x9898;&#x3002;&#x8981;&#x8BA9;&#x865A;&#x51FD;&#x6570;&#x6B63;&#x5E38;&#x7684;
+&#x5DE5;&#x4F5C;&#xFF0C;&#x5173;&#x952E;&#x5728;&#x4E8E;&#x6BCF;&#x4E2A;&#x5BF9;&#x8C61;&#x4E2D;&#x90FD;&#x5B58;&#x5728;&#x7684; vptr &#x6307;&#x5411;&#x6B63;&#x786E;&#x7684;&#x865A;&#x8868;&#x3002;&#x4F46;&#x662F;&#x8FD9;&#x4E2A; vptr &#x4E0D;&#x4F1A;&#x51ED;&#x7A7A;&#x51FA;&#x73B0;
+&#x5E76;&#x5DF2;&#x7ECF;&#x8BBE;&#x7F6E;&#x597D;&#x4E86;&#x7684;&#xFF0C;&#x5B83;&#x603B;&#x5F97;&#x5728;&#x67D0;&#x4E2A;&#x5730;&#x65B9;&#x8BBE;&#x7F6E;&#x597D;&#xFF0C;&#x800C;&#x8FD9;&#x4E2A;&#x8BBE;&#x7F6E;&#x70B9;&#x6700;&#x5408;&#x7406;&#x7684;&#x4F4D;&#x7F6E;&#x5C31;&#x662F;&#x6784;&#x9020;&#x51FD;&#x6570;&#x3002;
+&#x5982;&#x679C;&#x628A;&#x6784;&#x9020;&#x51FD;&#x6570;&#x58F0;&#x660E;&#x6210;&#x865A;&#x51FD;&#x6570;&#xFF0C;&#x90A3;&#x4E48;&#x8C01;&#x6765;&#x6B63;&#x786E;&#x7684;&#x5904;&#x7406;vptr&#x5462;&#xFF1F;&#x6240;&#x4EE5;&#x6211;&#x4EEC;&#x4E0D;&#x80FD;&#x628A;&#x6784;&#x9020;&#x51FD;&#x6570;&#x58F0;&#x660E;
+&#x6210;&#x6790;&#x6784;&#x51FD;&#x6570;&#x3002;</p>
+<h1 id="gou-zao-han-shu-zhong-wu-fa-zheng-chang-de-diao-yong-xu-han-shu">&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E2D;&#x65E0;&#x6CD5;&#x6B63;&#x5E38;&#x7684;&#x8C03;&#x7528;&#x865A;&#x51FD;&#x6570;</h1>
+<p>&#x7ED9;&#x51FA;&#x4E0B;&#x9762;&#x7684;&#x4EE3;&#x7801;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Base {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    Base() {</div><div class="line">        name();    <span class="comment">// ***1***</span></div><div class="line">    }</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">name</span><span class="params">()</span> </span>{</div><div class="line">        vname();</div><div class="line">    }</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">char</span>* <span class="title">vname</span><span class="params">()</span> </span>{</div><div class="line">        <span class="keyword">return</span> <span class="string">&quot;Base&quot;</span>;</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> Drived : <span class="keyword">public</span> Base {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">char</span>* <span class="title">vname</span><span class="params">()</span> </span>{</div><div class="line">        <span class="keyword">return</span> <span class="string">&quot;Drived&quot;</span>;</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line">Base* base = <span class="keyword">new</span> Drived;</div></pre></td></tr></table></figure>
+<p>&#x4E0A;&#x9762;&#x7A0B;&#x5E8F;&#x4E2D;&#x8C03;&#x7528;&#x7684; vname() &#x662F; Base &#x4E2D;&#x7684; vname &#x5B9E;&#x4F53;&#x800C;&#x4E0D;&#x662F; Drived &#x4E2D;&#x7684; vname() &#x5B9E;&#x4F53;
+&#xFF0C;&#x56E0;&#x4E3A;&#x5B9E;&#x9645;&#x4E0A;&#x7F16;&#x8BD1;&#x5668;&#x5904;&#x7406;&#x8FC7;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x7684;&#x4F2A;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">Base::Base() {</div><div class="line">    __vptr = __base_vtbl; <span class="comment">// &#x7F16;&#x8BD1;&#x5668;&#x5B89;&#x63D2;&#x7684;&#x4EE3;&#x7801;</span></div><div class="line"></div><div class="line">    name();</div><div class="line">}</div><div class="line"></div><div class="line">Drived::Drived() { <span class="comment">// &#x7F16;&#x8BD1;&#x5668;&#x5408;&#x6210;&#x5E76;&#x5B89;&#x63D2;&#x7684;&#x4EE3;&#x7801;</span></div><div class="line">    Base::Base();</div><div class="line"></div><div class="line">    __vptr = __drived_vtbl;</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x4E5F;&#x5C31;&#x662F;&#x8BF4;&#x8BBE;&#x7F6E;&#x5408;&#x9002;&#x7684; vptr &#x662F;&#x5728;&#x8C03;&#x7528;&#x57FA;&#x7C7B;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E4B;&#x540E;&#xFF0C;&#x57FA;&#x7C7B;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E2D;&#x8C03;&#x7528;&#x7684;&#x865A;&#x51FD;&#x6570;
+&#x5373;&#x4F7F;&#x662F;&#x8F6C;&#x6362;&#x6210;&#x4E86;&#x865A;&#x8868;&#x4E2D;&#x7684;&#x51FD;&#x6570;&#x8C03;&#x7528;&#xFF0C;&#x4E5F;&#x4E0D;&#x53EF;&#x80FD;&#x8C03;&#x7528;&#x5230;&#x5B50;&#x7C7B;&#x7684;&#x4E2D;&#x51FD;&#x6570;&#x5B9E;&#x73B0;&#xFF0C;&#x56E0;&#x4E3A;&#x90A3;&#x65F6;&#x5019; vtpr
+&#x8FD8;&#x6CA1;&#x6709;&#x6307;&#x5411;&#x5B50;&#x7C7B;&#x7684;&#x865A;&#x8868;&#x3002;&#x5173;&#x4E8E;&#x4EE3;&#x7801;&#x7684;&#x5B89;&#x63D2;&#x987A;&#x5E8F;&#x53EF;&#x4EE5;&#x53C2;&#x8003;&#x300A;&#x6DF1;&#x5EA6;&#x63A2;&#x7D22;C++&#x5BF9;&#x8C61;&#x6A21;&#x578B;&#x300B;&#x4E00;&#x4E66;&#x3002;</p>
+<h2 id="ru-he-shi-xian-xu-gou-zao-han-shu">&#x5982;&#x4F55;&#x5B9E;&#x73B0;&#x865A;&#x6784;&#x9020;&#x51FD;&#x6570;</h2>
+<p>&#x55EF;&#xFF0C;&#x8FD9;&#x4E2A;&#x95EE;&#x9898;&#x6709;&#x70B9;&#x767D;&#x75F4;&#x3002;&#x6700;&#x76F4;&#x63A5;&#x7684;&#x7B54;&#x6848;&#x662F;&#xFF1A;&#x4E0D;&#x53EF;&#x80FD;&#xFF0C;&#x4E0D;&#x90A3;&#x4E48;&#x76F4;&#x63A5;&#x7684;&#x7B54;&#x6848;&#x662F;&#xFF1A;&#x5DE5;&#x5382;&#x65B9;&#x6CD5;&#x3002;&#x5DE5;&#x5382;
+&#x65B9;&#x6CD5;&#x6A21;&#x5F0F;&#x7684;&#x522B;&#x540D;&#x5C31;&#x662F;&#x865A;&#x6784;&#x9020;&#x51FD;&#x6570;&#xFF0C;&#x56E0;&#x4E3A;&#x6211;&#x4EEC;&#x6CA1;&#x6709;&#x529E;&#x6CD5;&#x628A;&#x6784;&#x9020;&#x51FD;&#x6570;&#x58F0;&#x660E;&#x6210;&#x865A;&#x62DF;&#x51FD;&#x6570;&#xFF0C;&#x6240;&#x4EE5;&#x6211;&#x4EEC;
+&#x53EA;&#x6709;&#x901A;&#x8FC7;&#x66F2;&#x7EBF;&#x6551;&#x56FD;&#x7684;&#x65B9;&#x5F0F;&#xFF1A;&#x901A;&#x8FC7;&#x5DE5;&#x5382;&#x65B9;&#x6CD5;&#x6765;&#x8FD4;&#x56DE;&#x53EF;&#x7531;&#x5B50;&#x7C7B;&#x91CD;&#x65B0;&#x5B9A;&#x4E49;&#x7C7B;&#x578B;&#x7684;&#x5B9E;&#x4F8B;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Widget { };</div><div class="line"><span class="keyword">class</span> Button : <span class="keyword">public</span> Widget { };</div><div class="line"><span class="keyword">class</span> Checkbox : <span class="keyword">public</span> Widget { };</div><div class="line"></div><div class="line"><span class="keyword">class</span> WidgetCreator {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">virtual</span> Widget* <span class="title">CreateWidget</span><span class="params">()</span> </span>{</div><div class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Widget;</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> CheckboxCreator {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">virtual</span> Widget* <span class="title">CreateWidget</span><span class="params">()</span> </span>{</div><div class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Checkbox;</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> ButtonCreator : <span class="keyword">public</span> WidgetCreator {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">virtual</span> Widget* <span class="title">CreateWidget</span><span class="params">()</span> </span>{</div><div class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Button;</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+<p>&#x7528;&#x6237;&#x4E0D;&#x518D;&#x76F4;&#x63A5;&#x901A;&#x8FC7;&#x8C03;&#x7528; Widget &#x6765;&#x83B7;&#x5F97; Widget &#x6216;&#x8005;&#x5B83;&#x5B50;&#x7C7B;&#x7684;&#x5B9E;&#x4F8B;&#xFF0C;&#x800C;&#x662F;&#x901A;&#x8FC7;&#x4E0A;&#x9762;&#x8FD9;&#x6837;&#x7684;&#x5DE5;
+&#x5382;&#x65B9;&#x6CD5;<code>CreateWidget</code> &#x83B7;&#x5F97;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">WidgetCreator* creator = CheckboxCreator::Instance();</div><div class="line">Widget* widget = creator.CreateWidget(); <span class="comment">// &#x8FD4;&#x56DE; Checkbox</span></div><div class="line"></div><div class="line">creator = ButtonCreator::Instance();</div><div class="line">Widget* button = creator.CreateWidget(); <span class="comment">// &#x8FD4;&#x56DE; Button</span></div></pre></td></tr></table></figure>
+<p>&#x56E0;&#x4E3A;&#x8FD9;&#x4E2A;&#x65B9;&#x6CD5;&#x53EF;&#x4EE5;&#x91CD;&#x8F7D;&#x540C;&#x65F6;&#x53C8;&#x63D0;&#x4F9B;&#x6784;&#x9020;&#x51FD;&#x6570;&#x7684;&#x529F;&#x80FD;&#xFF0C;&#x6240;&#x4EE5;&#x5B83;&#x4E5F;&#x88AB;&#x6210;&#x4E3A;&#x865A;&#x62DF;&#x6784;&#x9020;&#x51FD;&#x6570;&#x3002;&#x5173;&#x4E8E;&#x5DE5;
+&#x5382;&#x65B9;&#x6CD5;&#x7684;&#x8BE6;&#x7EC6;&#x4FE1;&#x606F;&#x53EF;&#x4EE5;&#x67E5;&#x770B;&#x300A;&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;&#x300B;&#x4E00;&#x4E66;&#x3002;</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/18/inside-cpp-object-model/" rel="next" title="读书札记之 —— 《深度探索 C++ 对象模型》">
+                <i class="fa fa-chevron-left"></i> 读书札记之 —— 《深度探索 C++ 对象模型》
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/18/icom-translation-error/" rel="prev" title="细数《深度探索C++对象模型》一书中的20个翻译错误">
+                细数《深度探索C++对象模型》一书中的20个翻译错误 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gou-zao-han-shu-wei-shi-me-bu-neng-shi-xu-ni-han-shu"><span class="nav-number">1.</span> <span class="nav-text">构造函数为什么不能是虚拟函数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tong-chang-sheng-ming-cheng-xu-han-shu-de-xi-gou-han-shu"><span class="nav-number">1.1.</span> <span class="nav-text">通常声明成虚函数的析构函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bu-neng-sheng-ming-cheng-xu-han-shu-de-gou-zao-han-shu"><span class="nav-number">1.2.</span> <span class="nav-text">不能声明成虚函数的构造函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gou-zao-han-shu-zhong-wu-fa-zheng-chang-de-diao-yong-xu-han-shu"><span class="nav-number">2.</span> <span class="nav-text">构造函数中无法正常的调用虚函数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ru-he-shi-xian-xu-gou-zao-han-shu"><span class="nav-number">2.1.</span> <span class="nav-text">如何实现虚构造函数</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

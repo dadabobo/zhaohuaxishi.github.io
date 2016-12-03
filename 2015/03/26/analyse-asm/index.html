@@ -1,0 +1,979 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="概述#
+一个 C 程序它会编译时候产生什么样的汇编代码？这些汇编代码如何执行？函数的栈是如
+何工作的？这里通过一个简单的 C 程序生成的汇编程序来分析上面的这些问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一个简单 C 程序的汇编代码分析">
+<meta property="og:url" content="http://blog.guorongfei.com/2015/03/26/analyse-asm/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="概述#
+一个 C 程序它会编译时候产生什么样的汇编代码？这些汇编代码如何执行？函数的栈是如
+何工作的？这里通过一个简单的 C 程序生成的汇编程序来分析上面的这些问题。">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一个简单 C 程序的汇编代码分析">
+<meta name="twitter:description" content="概述#
+一个 C 程序它会编译时候产生什么样的汇编代码？这些汇编代码如何执行？函数的栈是如
+何工作的？这里通过一个简单的 C 程序生成的汇编程序来分析上面的这些问题。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2015/03/26/analyse-asm/"/>
+
+
+
+
+
+  <title> 一个简单 C 程序的汇编代码分析 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/03/26/analyse-asm/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                一个简单 C 程序的汇编代码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-03-26T00:00:00+08:00">
+                2015-03-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="gai-shu">&#x6982;&#x8FF0;#</h1>
+<p>&#x4E00;&#x4E2A; C &#x7A0B;&#x5E8F;&#x5B83;&#x4F1A;&#x7F16;&#x8BD1;&#x65F6;&#x5019;&#x4EA7;&#x751F;&#x4EC0;&#x4E48;&#x6837;&#x7684;&#x6C47;&#x7F16;&#x4EE3;&#x7801;&#xFF1F;&#x8FD9;&#x4E9B;&#x6C47;&#x7F16;&#x4EE3;&#x7801;&#x5982;&#x4F55;&#x6267;&#x884C;&#xFF1F;&#x51FD;&#x6570;&#x7684;&#x6808;&#x662F;&#x5982;
+&#x4F55;&#x5DE5;&#x4F5C;&#x7684;&#xFF1F;&#x8FD9;&#x91CC;&#x901A;&#x8FC7;&#x4E00;&#x4E2A;&#x7B80;&#x5355;&#x7684; C &#x7A0B;&#x5E8F;&#x751F;&#x6210;&#x7684;&#x6C47;&#x7F16;&#x7A0B;&#x5E8F;&#x6765;&#x5206;&#x6790;&#x4E0A;&#x9762;&#x7684;&#x8FD9;&#x4E9B;&#x95EE;&#x9898;&#x3002;</p>
+<a id="more"></a>
+<h1 id="yi-duan-jian-dan-de-c-dai-ma">&#x4E00;&#x6BB5;&#x7B80;&#x5355;&#x7684; c &#x4EE3;&#x7801;</h1>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">g</span><span class="params">(<span class="keyword">int</span> x)</span></span></div><div class="line">{</div><div class="line">	  <span class="keyword">return</span> x + <span class="number">3</span>;</div><div class="line">}</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">f</span><span class="params">(<span class="keyword">int</span> x)</span></span></div><div class="line">{</div><div class="line">	  <span class="keyword">return</span> g(x);</div><div class="line">}</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">{</div><div class="line">	  <span class="keyword">return</span> f(<span class="number">8</span>) + <span class="number">1</span>;</div><div class="line">}</div></pre></td></tr></table></figure>
+<h1 id="de-dao-de-jian-hua-de-hui-bian-dai-ma">&#x5F97;&#x5230;&#x7684;&#x7B80;&#x5316;&#x7684;&#x6C47;&#x7F16;&#x4EE3;&#x7801;#</h1>
+<pre><code>g:
+    pushl	%ebp
+    movl	%esp, %ebp
+    movl	8(%ebp), %eax
+    addl	$3, %eax
+    popl	%ebp
+    ret
+f:
+    pushl	%ebp
+    movl	%esp, %ebp
+    pushl	8(%ebp)
+    call	g
+    addl	$4, %esp
+    leave
+    ret
+main:
+    pushl	%ebp
+    movl	%esp, %ebp
+    pushl	$8
+    call	f
+    addl	$4, %esp
+    addl	$1, %eax
+    leave
+    ret
+</code></pre>
+<h1 id="fen-xi">&#x5206;&#x6790;#</h1>
+<p>&#x4ECE; 16 &#x884C;&#x7684; main &#x51FD;&#x6570;&#x5F00;&#x59CB;&#x6267;&#x884C;&#xFF1A;&#x5047;&#x8BBE; <code>ebp</code> &#x76EE;&#x524D;&#x6307;&#x5411; 128, <code>esp</code> &#x76EE;&#x524D;&#x6307;&#x5411; 128</p>
+<p>17 - pushl	%ebp</p>
+<p>&#x628A;&#x8C03;&#x7528; <code>mian</code> &#x51FD;&#x6570;&#x4E4B;&#x524D;&#x7684; <code>ebp</code> &#x538B;&#x5165;&#x6808;&#x4E2D;&#xFF0C;</p>
+<pre><code>+-----+-----+
+| 128 | 128 |   &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+
+| 128 | 124 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>18 movl %esp, %ebp</p>
+<p>&#x628A; esp &#x7684;&#x503C;&#x4F20;&#x9012;&#x5230; ebp &#x4E2D;&#xFF0C;&#x8FD9;&#x6837;&#x5C31;&#x5F62;&#x6210;&#x4E86; main &#x51FD;&#x6570;&#x7684;&#x6808;&#x5E27;&#x3002;</p>
+<pre><code>+-----+-----+
+| 128 | 124 |  &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----+-----+
+| 124 | 124 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>19 pushl	$8 &#x2014;&#x2014; &#x628A;&#x51FD;&#x6570; f &#x7684;&#x53C2;&#x6570; 8 &#x538B;&#x5165;&#x6808;&#x4E2D;</p>
+<pre><code>+-----+-----+
+| 124 | 120 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     8     |
++-----------+   120
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+</code></pre>
+<p>20 call	f &#x2014;&#x2014; &#x8C03;&#x7528;&#x51FD;&#x6570; f</p>
+<pre><code>+-----+-----+----+
+| 128 | 124 | 21 |  &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp  eip
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+---+
+| 124 | 116 | 9 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+---+
+  ebp   esp  eip
+</code></pre>
+<p>9 pushl %ebp &#x2014;&#x2014; &#x4FDD;&#x5B58; main &#x51FD;&#x6570;&#x7684;&#x6808;&#x57FA;&#x5730;&#x5740;&#xFF0C;&#x548C;&#x6267;&#x884C;&#x4F4D;&#x7F6E; eip &#x4EE5;&#x4FBF;&#x6062;&#x590D;</p>
+<pre><code>+-----+-----+
+| 124 | 116 |   &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+
+| 124 | 112 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>10 movl %esp, %ebp &#x2014;&#x2014; &#x628A; esp &#x7684;&#x503C;&#x4F20;&#x9012;&#x5230; ebp &#x4E2D;&#xFF0C;&#x5F62;&#x6210;&#x51FD;&#x6570; f &#x7684;&#x65B0;&#x6808;&#x5E27;</p>
+<pre><code>+-----+-----+
+| 124 | 112 |  &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----+-----+
+| 112 | 112 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>11 pushl	8(%ebp) &#x2014;&#x2014; &#x628A; f &#x51FD;&#x6570;&#x7684;&#x53C2;&#x6570; 8 &#x538B;&#x5165;&#x5230; f &#x51FD;&#x6570;&#x7684;&#x6808;&#x4E2D;&#x3002;&#x56E0;&#x4E3A; ebp &#x662F; 112&#xFF0C;&#x6240;&#x4EE5; 8(%ebp) 120 &#x4E2D;&#x7684;&#x503C;&#xFF0C;&#x4E5F;&#x5C31;&#x662F; 8&#x3002;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|     $8    |
++-----------+   108
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+
+| 112 | 108 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>12 call g &#x2014;&#x2014; &#x8C03;&#x7528; g &#x51FD;&#x6570;</p>
+<pre><code>+-----+-----+----+
+| 112 | 108 | 13 |  &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp  eip
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|     $8    |
++-----------+   108
+|   eip 13  |
++-----------+   104
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+---+
+| 112 | 104 | 2 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+---+
+  ebp   esp  eip
+</code></pre>
+<p>2 pushl %ebp &#x2014;&#x2014; &#x628A; f &#x51FD;&#x6570;&#x7684;&#x57FA;&#x5730;&#x5740;&#x538B;&#x5165;&#x6808;&#x4E2D;&#x4EE5;&#x4FBF;&#x8FD4;&#x56DE;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|     $8    |
++-----------+   108
+|   eip 13  |
++-----------+   104
+|  ebp 112  |
++-----------+   100
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+
+| 112 | 100 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>3 movl	%esp, %ebp &#x2014;&#x2014; &#x628A; ebp &#x91CD;&#x7F6E;&#x5230; esp &#x7684;&#x4F4D;&#x7F6E;&#xFF0C;&#x5F62;&#x6210; g &#x51FD;&#x6570;&#x7684;&#x6808;&#x5E27;&#x3002;</p>
+<pre><code>+-----+-----+
+| 112 | 100 |  &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+
++-----+-----+
+| 100 | 100 |  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+
+  ebp   esp
+</code></pre>
+<p>4 movl	8(%ebp), %eax &#x2014;&#x2014; &#x628A; g &#x51FD;&#x6570;&#x7684;&#x53C2;&#x6570; x &#x653E;&#x5230; eax &#x5BC4;&#x5B58;&#x5668;&#x4E2D;&#x3002;</p>
+<pre><code>+-----+-----+---+
+| 100 | 100 | 8 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+---+
+  ebp   esp  eax
+</code></pre>
+<p>5 addl	$3, %eax</p>
+<pre><code>+-----+-----+----+
+| 100 | 100 | 11 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>6 popl %ebp &#x2014;&#x2014; &#x628A;&#x6808;&#x9876;&#x90E8;&#x7684;&#x5143;&#x7D20;&#x5F39;&#x51FA;&#x653E;&#x5165;&#x5230; %ebp &#x4E2D;&#xFF0C;&#x6062;&#x590D; f &#x51FD;&#x6570;&#x7684;&#x6808;&#x3002;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|     $8    |
++-----------+   108
+|   eip 13  |
++-----------+   104
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
+
++-----+-----+----+
+| 112 | 104 | 11 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>7 ret &#x2014;&#x2014; &#x6062;&#x590D; f &#x51FD;&#x6570;&#x4E2D;&#x7684; eip</p>
+<pre><code>+-----+-----+----+---+
+| 112 | 104 | 11 | 8 | &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+---+
+  ebp   esp   eax eip
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|     $8    |
++-----------+   108
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
+
++-----+-----+----+----+
+| 112 | 108 | 11 | 13 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+----+
+  ebp   esp   eax  eip
+</code></pre>
+<p>13 addl $4, %esp &#x2014;&#x2014; &#x6808;&#x9876;&#x56DE;&#x9000; 4&#xFF0C;&#x76F8;&#x5F53;&#x4E0E; pop &#x4F46;&#x662F;&#x4E0D;&#x9700;&#x8981;&#x6808;&#x9876;&#x503C;&#x3002;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|  ebp 124  |
++-----------+   112
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
+
++-----+-----+----+
+| 112 | 112 | 11 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>14 leave &#x2014;&#x2014; &#x76F8;&#x5F53;&#x4E8E; move %ebp %esp, pop %ebp&#xFF0C;&#x6062;&#x590D; main &#x51FD;&#x6570;&#x7684;&#x6808;&#x5E27;&#x3002;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|  eip 21   |
++-----------+   116
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
+
++-----+-----+----+
+| 124 | 116 | 11 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>15 ret &#x2014;&#x2014; &#x6062;&#x590D; main &#x51FD;&#x6570;&#x7684; eip&#x3002;</p>
+<pre><code>+-----+-----+----+----+
+| 124 | 116 | 11 | 16 | &#x64CD;&#x4F5C;&#x4E4B;&#x524D;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+----+
+  ebp   esp   eax  eip
+
++-----------+   128
+|  ebp 128  |
++-----------+   124
+|     $8    |
++-----------+   120
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
+
++-----+-----+----+----+
+| 124 | 120 | 11 | 21 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+----+
+  ebp   esp   eax  eip
+</code></pre>
+<p>21 addl  $4, %esp &#x2014;&#x2014; &#x53BB;&#x6389;&#x6808;&#x9876;&#x5143;&#x7D20;</p>
+<pre><code>+-----------+   128
+|  ebp 128  |
++-----------+   124
+|           |
++-----------+  &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x6808;
+
++-----+-----+----+
+| 124 | 124 | 11 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>22 addl  $1, %eax</p>
+<pre><code>+-----+-----+----+
+| 124 | 124 | 12 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>23 leave</p>
+<pre><code>+-----+-----+----+
+| 128 | 128 | 12 | &#x64CD;&#x4F5C;&#x4E4B;&#x540E;&#x7684;&#x5BC4;&#x5B58;&#x5668;
++-----+-----+----+
+  ebp   esp   eax
+</code></pre>
+<p>24 ret</p>
+<p>&#x7ED3;&#x675F; main &#x51FD;&#x6570;&#x7684;&#x8C03;&#x7528;&#xFF0C;&#x8FD4;&#x56DE;&#x4E4B;&#x524D;&#x7684;&#x6808;&#x5E27;&#x3002;&#x6B64;&#x65F6; eax &#x4E2D;&#x5305;&#x542B;&#x8FD4;&#x56DE;&#x503C; 12</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/03/24/blanks-in-scanf/" rel="next" title="关于 scanf() 函数格式字符串中的空白字符">
+                <i class="fa fa-chevron-left"></i> 关于 scanf() 函数格式字符串中的空白字符
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/03/28/use-pointer-or-reference-as-argument/" rel="prev" title="关于 C++ 参数使用指针还是引用的总结">
+                关于 C++ 参数使用指针还是引用的总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gai-shu"><span class="nav-number">1.</span> <span class="nav-text">概述#</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#yi-duan-jian-dan-de-c-dai-ma"><span class="nav-number">2.</span> <span class="nav-text">一段简单的 c 代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#de-dao-de-jian-hua-de-hui-bian-dai-ma"><span class="nav-number">3.</span> <span class="nav-text">得到的简化的汇编代码#</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fen-xi"><span class="nav-number">4.</span> <span class="nav-text">分析#</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

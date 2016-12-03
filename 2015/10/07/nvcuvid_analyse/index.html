@@ -1,0 +1,765 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="GPU," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="这篇文章主要分析 NVCUVID 提供的解码器，里面提到的所有的源文件都可以在英伟
+达的 nvenc_sdk 中找到。
+解码器的代码分析
+SDK 中的 sample 文件夹下的 NvTranscoder 中包含了编码器和解码器的用法，编码
+器的内容不在这里分析，因为 FFMPEG 中已经包含了相关的代码，不需要其他的处理
+。
+解码器在 SDK 中有一份封装，主要是 NvTranscoder 下的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="英伟达硬件解码器分析">
+<meta property="og:url" content="http://blog.guorongfei.com/2015/10/07/nvcuvid_analyse/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="这篇文章主要分析 NVCUVID 提供的解码器，里面提到的所有的源文件都可以在英伟
+达的 nvenc_sdk 中找到。
+解码器的代码分析
+SDK 中的 sample 文件夹下的 NvTranscoder 中包含了编码器和解码器的用法，编码
+器的内容不在这里分析，因为 FFMPEG 中已经包含了相关的代码，不需要其他的处理
+。
+解码器在 SDK 中有一份封装，主要是 NvTranscoder 下的">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="英伟达硬件解码器分析">
+<meta name="twitter:description" content="这篇文章主要分析 NVCUVID 提供的解码器，里面提到的所有的源文件都可以在英伟
+达的 nvenc_sdk 中找到。
+解码器的代码分析
+SDK 中的 sample 文件夹下的 NvTranscoder 中包含了编码器和解码器的用法，编码
+器的内容不在这里分析，因为 FFMPEG 中已经包含了相关的代码，不需要其他的处理
+。
+解码器在 SDK 中有一份封装，主要是 NvTranscoder 下的">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2015/10/07/nvcuvid_analyse/"/>
+
+
+
+
+
+  <title> 英伟达硬件解码器分析 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/10/07/nvcuvid_analyse/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                英伟达硬件解码器分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-10-07T02:00:00+08:00">
+                2015-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#x8FD9;&#x7BC7;&#x6587;&#x7AE0;&#x4E3B;&#x8981;&#x5206;&#x6790; NVCUVID &#x63D0;&#x4F9B;&#x7684;&#x89E3;&#x7801;&#x5668;&#xFF0C;&#x91CC;&#x9762;&#x63D0;&#x5230;&#x7684;&#x6240;&#x6709;&#x7684;&#x6E90;&#x6587;&#x4EF6;&#x90FD;&#x53EF;&#x4EE5;&#x5728;&#x82F1;&#x4F1F;
+&#x8FBE;&#x7684; <code>nvenc_sdk</code> &#x4E2D;&#x627E;&#x5230;&#x3002;</p>
+<h1 id="jie-ma-qi-de-dai-ma-fen-xi">&#x89E3;&#x7801;&#x5668;&#x7684;&#x4EE3;&#x7801;&#x5206;&#x6790;</h1>
+<p>SDK &#x4E2D;&#x7684; sample &#x6587;&#x4EF6;&#x5939;&#x4E0B;&#x7684; NvTranscoder &#x4E2D;&#x5305;&#x542B;&#x4E86;&#x7F16;&#x7801;&#x5668;&#x548C;&#x89E3;&#x7801;&#x5668;&#x7684;&#x7528;&#x6CD5;&#xFF0C;&#x7F16;&#x7801;
+&#x5668;&#x7684;&#x5185;&#x5BB9;&#x4E0D;&#x5728;&#x8FD9;&#x91CC;&#x5206;&#x6790;&#xFF0C;&#x56E0;&#x4E3A; FFMPEG &#x4E2D;&#x5DF2;&#x7ECF;&#x5305;&#x542B;&#x4E86;&#x76F8;&#x5173;&#x7684;&#x4EE3;&#x7801;&#xFF0C;&#x4E0D;&#x9700;&#x8981;&#x5176;&#x4ED6;&#x7684;&#x5904;&#x7406;
+&#x3002;</p>
+<p>&#x89E3;&#x7801;&#x5668;&#x5728; SDK &#x4E2D;&#x6709;&#x4E00;&#x4EFD;&#x5C01;&#x88C5;&#xFF0C;&#x4E3B;&#x8981;&#x662F; NvTranscoder &#x4E0B;&#x7684; VideoDecoder &#x7C7B;&#x3002;&#x76EE;&#x524D;
+&#x8FD9;&#x4E2A;&#x7C7B;&#x7684;&#x5177;&#x4F53;&#x7528;&#x6CD5;&#x8FD8;&#x4E0D;&#x662F;&#x7279;&#x522B;&#x7684;&#x6E05;&#x695A;&#x3002;&#x5206;&#x6790;&#x5C06;&#x4F1A;&#x4ECE; main &#x51FD;&#x6570;&#x5F00;&#x59CB;&#x3002;</p>
+<a id="more"></a>
+<h1 id="main">main</h1>
+<p>NvTranscoder &#x6709;&#x4E00;&#x4E2A;&#x5355;&#x72EC;&#x7684;&#x6587;&#x4EF6;&#xFF0C;&#x6267;&#x884C;&#x903B;&#x8F91;&#x4ECE; <code>main()</code> &#x51FD;&#x6570;&#x5F00;&#x59CB;&#x3002;</p>
+<p>cuInit(0) &#x5E94;&#x8BE5;&#x662F;&#x521D;&#x59CB;&#x5316; cuda &#x7684;&#x76F8;&#x5173;&#x4EE3;&#x7801;&#x3002;&#x76EE;&#x524D;&#x6CA1;&#x6709;&#x627E;&#x5230;&#x5B9A;&#x4E49;&#xFF0C;&#x4F30;&#x8BA1;&#x7C7B;&#x4F3C;&#x4E8E;
+FFMPEG &#x4E2D;&#x7684; <code>av_register_all</code>&#x3002;</p>
+<p>105 &#x884C;&#x4E4B;&#x524D;&#x7684;&#x4EE3;&#x7801;&#x662F;&#x7F16;&#x7801;&#x76F8;&#x5173;&#x7684;&#x4EE3;&#x7801;&#xFF0C; 85 &#x884C;&#x4EE5;&#x524D;&#x8BBE;&#x7F6E;&#x5404;&#x79CD;&#x7F16;&#x7801;&#x53C2;&#x6570;&#xFF0C;87 &#x884C;&#x5206;&#x6790;&#x4ECE;
+&#x547D;&#x4EE4;&#x884C;&#x8BFB;&#x5165;&#x7684;&#x53C2;&#x6570;&#xFF0C;100 &#x884C;&#x6253;&#x5F00;&#x76EE;&#x6807;&#x8F93;&#x51FA;&#x6587;&#x4EF6;&#x3002;</p>
+<p>110 &#x884C;&#x5F00;&#x59CB;&#x4EE3;&#x7801;&#x5E94;&#x8BE5;&#x662F;&#x548C;&#x89E3;&#x7801;&#x76F8;&#x5173;&#x7684;&#x6838;&#x5FC3;&#x4EE3;&#x7801;&#x3002;<code>cuDeviceGet</code>, <code>cuCtxCreate</code>
+<code>cuCtxPopCurrent</code>, <code>cuvidCtxLockCreate</code> &#x5E94;&#x8BE5;&#x662F;&#x56FA;&#x5B9A;&#x5199;&#x6CD5;&#x3002;&#x521D;&#x59CB;&#x5316;&#x4E00;&#x4E9B;&#x5185;&#x90E8;&#x673A;&#x5236;
+&#x3002;</p>
+<p>120 &#x884C;&#x7684; <code>InitVideoDecoder</code> &#x662F;&#x89E3;&#x7801;&#x5668;&#x521B;&#x5EFA;&#x7684;&#x5730;&#x65B9;&#x3002;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x9700;&#x8981;&#x8BA4;&#x771F;&#x7684;&#x5206;&#x6790;&#xFF0C;&#x6574;
+&#x4E2A;&#x89E3;&#x7801;&#x5668;&#x7684;&#x5173;&#x952E;&#x4EE3;&#x7801;&#x5E94;&#x8BE5;&#x5C31;&#x5728;&#x8FD9;&#x91CC;&#x9762;&#x3002;</p>
+<p>137 &#x884C;&#x521D;&#x59CB;&#x5316; 119 &#x884C;&#x4E2D;&#x521B;&#x5EFA;&#x7684; FrameQueue&#x3002;&#x8FD9;&#x4E2A;&#x961F;&#x5217;&#x5E94;&#x8BE5;&#x76F8;&#x5F53;&#x4E8E;&#x89E3;&#x7801;&#x5668;&#x548C;&#x7F16;&#x7801;&#x5668;&#x4E4B;
+&#x95F4;&#x7684;&#x4E00;&#x4E2A;&#x7F13;&#x51B2;&#x533A;&#xFF0C;&#x89E3;&#x7801;&#x5668;&#x65B9;&#x5185;&#x5BB9;&#x8FDB;&#x53BB;&#xFF0C;&#x7F16;&#x7801;&#x5668;&#x4ECE;&#x4E2D;&#x53D6;&#x5185;&#x5BB9;&#x51FA;&#x6765;&#x3002;</p>
+<p>139 &#x884C;&#x5230; 180 &#x90FD;&#x662F;&#x5173;&#x4E8E;&#x7F16;&#x7801;&#x5668;&#x7684;&#x8BBE;&#x7F6E;&#x3002;&#x8FD9;&#x91CC;&#x4E0D;&#x505A;&#x8BE6;&#x7EC6;&#x7684;&#x5206;&#x6790;&#x3002;</p>
+<p>187 &#x884C;&#x7684;&#x6CE8;&#x91CA;&#x663E;&#x793A; <code>pthread_create</code> &#x521B;&#x5EFA;&#x51FA;&#x6765;&#x89E3;&#x7801;&#x7EBF;&#x7A0B;&#xFF0C;&#x6240;&#x4EE5;&#x89E3;&#x7801;&#x5DE5;&#x4F5C;&#x662F;&#x7531;&#x8FD9;&#x4E2A;&#x7EBF;
+&#x7A0B;&#x5B8C;&#x6210;&#x7684;&#x3002;&#x7EBF;&#x7A0B;&#x6267;&#x884C;&#x7684;&#x51FD;&#x6570;&#x662F; <code>DecodeProc</code> &#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#xFF0C;&#x800C;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x53EA;&#x4E0D;&#x8FC7;&#x662F;&#x8C03;&#x7528;&#x7684;
+&#x89E3;&#x7801;&#x5668;&#x7684; <code>Start()</code> &#x65B9;&#x6CD5;&#x3002;</p>
+<p>195 &#x884C;&#x7684;&#x4EE3;&#x7801;&#x6CE8;&#x91CA;&#x6765;&#x770B;&#xFF0C;&#x8FD9;&#x540E;&#x7EED;&#x7684;&#x4EE3;&#x7801;&#x90FD;&#x662F;&#x7F16;&#x7801;&#x76F8;&#x5173;&#x7684;&#x4EE3;&#x7801;&#xFF0C;&#x8FD9;&#x91CC;&#x4E0D;&#x505A;&#x5206;&#x6790;&#x3002;&#x6700;&#x540E;&#x5728;
+245 &#x884C;&#x548C; 246 &#x884C;&#x7684;&#x672A;&#x77E5; <code>cuvidCtxLockDestroy</code> &#x548C; <code>cuCtxDestroy</code> &#x5E94;&#x8BE5;&#x662F;&#x5BF9;&#x5E94;&#x4E8E;
+110 &#x884C;&#x7684;&#x90A3;&#x4E9B;&#x4EE3;&#x7801;&#x3002;</p>
+<h1 id="videodecoder-cpp">VideoDecoder.cpp</h1>
+<p>&#x8FD9;&#x4E2A;&#x6587;&#x4EF6;&#x5B9E;&#x73B0;&#x4E86;&#x89E3;&#x7801;&#x5668;&#x7684;&#x5C01;&#x88C5;&#x7C7B; CudaDecoder, &#x8FD9;&#x4E2A;&#x7C7B;&#x662F;&#x6574;&#x4E2A;&#x786C;&#x4EF6;&#x89E3;&#x7801;&#x5668;&#x5B9E;&#x73B0;&#x7684;&#x5173;&#x952E;
+&#xFF0C;&#x4F46;&#x662F;&#x8FD9;&#x4E2A;&#x7C7B;&#x5176;&#x5B9E;&#x6BD4;&#x8F83;&#x7B80;&#x5355;&#x3002;&#x5B83;&#x5728; <code>main</code> &#x51FD;&#x6570;&#x4E2D;&#x6D89;&#x53CA;&#x5230;&#x7684;&#x65B9;&#x6CD5;&#x53EA;&#x6709;
+<code>InitVideoDecoder</code>, <code>GetCodecParam</code>, <code>Start</code> &#x548C; <code>GetDecoder</code> &#x8FD9;&#x56DB;&#x4E2A;&#x3002;</p>
+<h2 id="initvideodecoder">InitVideoDecoder</h2>
+<p>&#x8FD9;&#x4E2A;&#x65B9;&#x6CD5;&#x662F;&#x9996;&#x5148;&#x88AB;&#x8C03;&#x7528;&#x7684;&#x65B9;&#x6CD5;&#x3002;&#x5B83;&#x8D1F;&#x8D23;&#x7F16;&#x7801;&#x5668;&#x7684;&#x521D;&#x59CB;&#x5316;&#x64CD;&#x4F5C;&#x3002;</p>
+<p>&#x4ECE; VideoDecoder.cpp &#x4E2D;&#x7684;&#x5B9E;&#x73B0;&#x6765;&#x770B;&#xFF0C;&#x521D;&#x59CB;&#x5316;&#x4E3B;&#x8981;&#x5305;&#x62EC;&#x4E09;&#x4E2A;&#x90E8;&#x5206;&#xFF1A;</p>
+<h3 id="chuang-jian-shi-pin-yuan">&#x521B;&#x5EFA;&#x89C6;&#x9891;&#x6E90;</h3>
+<p>&#x89C6;&#x9891;&#x6E90;&#x7684;&#x53C2;&#x6570;&#x662F; CUVIDSOURCEPARAMS&#xFF0C;&#x5176;&#x4E2D;&#x8BBE;&#x7F6E;&#x4E86;&#x4E00;&#x4E2A; <code>pfnVideoDateHandler</code>&#xFF0C;&#x4ECE;
+&#x5B57;&#x9762;&#x4E0A;&#x7406;&#x89E3;&#x5B83;&#x662F;&#x4E00;&#x4E2A;&#x89C6;&#x9891;&#x6570;&#x636E;&#x7684;&#x56DE;&#x8C03;&#x5904;&#x7406;&#x51FD;&#x6570;&#x3002;</p>
+<p>&#x521B;&#x5EFA;&#x89C6;&#x9891;&#x6E90;&#x7684;&#x65B9;&#x6CD5;&#x662F; <code>cuvidCreateVideoSource()</code> &#x51FD;&#x6570;&#xFF0C;&#x76EE;&#x524D;&#x6765;&#x8BF4;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x81F4;&#x547D;
+&#x95EE;&#x9898;&#x5728;&#x4E8E;&#x5B83;&#x7684;&#x63A5;&#x6536; videoPath &#x4F5C;&#x4E3A;&#x53C2;&#x6570;&#xFF0C;&#x8FD9;&#x4F3C;&#x4E4E;&#x610F;&#x5473;&#x7740;&#x5B83;&#x53EA;&#x80FD;&#x5904;&#x7406;&#x6587;&#x4EF6;&#x89C6;&#x9891;&#x6E90;&#x3002;&#x8FD9;
+&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x51FD;&#x6570;&#x539F;&#x578B;&#x5B9A;&#x4E49;&#x5728; <code>nvcuvid.h</code> &#x8FD9;&#x4E2A;&#x5934;&#x6587;&#x4EF6;&#x4E2D;&#xFF0C;&#x8FD9;&#x4E2A;&#x5934;&#x6587;&#x4EF6;&#x53EA;&#x5B9A;&#x4E49;&#x4E86;&#x4E0B;&#x9762;&#x8FD9;
+&#x4E9B;&#x548C;&#x89C6;&#x9891;&#x6E90;&#x76F8;&#x5173;&#x7684;&#x63A5;&#x53E3;&#xFF1A;</p>
+<pre><code>cuvidCreateVideoSource();
+cuvidCreateVideoSourceW();
+cuvidDestroyVideoSource();
+cuvidSetVideoSourceState();
+cuvidGetVideoSourceState();
+cuvidGetSourceVideoFormat();
+cuvidGetSourceAudioFormat();
+</code></pre>
+<p>&#x4ECE;&#x63A5;&#x53E3;&#x6765;&#x770B;&#x53EA;&#x6709; <code>cuvidCreateVideoSource(); cuvidCreateVideoSourceW();</code> &#x8FD9;&#x4E24;
+&#x4E2A;&#x51FD;&#x6570;&#x53EF;&#x7528;&#xFF0C;&#x800C;&#x5B83;&#x4EEC;&#x552F;&#x4E00;&#x7684;&#x533A;&#x522B;&#x5728;&#x4E8E;&#x63A5;&#x6536;&#x4E0D;&#x540C;&#x7684;&#x6587;&#x4EF6;&#x8DEF;&#x5F84;&#x5B57;&#x7B26;&#x4E32;&#xFF0C;&#x524D;&#x8005;&#x662F;&#x666E;&#x901A;&#x5B57;&#x7B26;&#x800C;
+&#x540E;&#x8005;&#x662F;&#x5BBD;&#x5B57;&#x7B26;&#x3002;</p>
+<p>&#x76EE;&#x524D;&#x6682;&#x65F6;&#x6CA1;&#x6709;&#x5176;&#x4ED6;&#x7684;&#x8D44;&#x6599;&#x8868;&#x660E;&#x53EF;&#x4EE5;&#x521B;&#x5EFA;&#x975E;&#x6587;&#x4EF6;&#x7C7B;&#x578B;&#x7684;&#x89C6;&#x9891;&#x6E90;&#xFF0C;&#x6240;&#x4EE5;&#x8FD9;&#x4E2A;&#x89E3;&#x7801;&#x5668;&#x7684;&#x7528;&#x5904;
+&#x4F30;&#x8BA1;&#x4E0D;&#x4F1A;&#x592A;&#x5927;&#xFF0C;&#x81F3;&#x5C11;&#x5728;&#x4F20;&#x5C4F;&#x5E94;&#x7528;&#x4E2D;&#x7684;&#x7528;&#x5904;&#x4F1A;&#x76F8;&#x5BF9;&#x8F83;&#x5C0F;&#x3002;</p>
+<h3 id="huo-qu-shi-pin-yuan-de-can-shu-bing-chuang-jian-cuvid-ku-de-jie-ma-qi">&#x83B7;&#x53D6;&#x89C6;&#x9891;&#x6E90;&#x7684;&#x53C2;&#x6570;&#xFF0C;&#x5E76;&#x521B;&#x5EFA; cuvid &#x5E93;&#x7684;&#x89E3;&#x7801;&#x5668;</h3>
+<p>&#x89C6;&#x9891;&#x6E90;&#x7684;&#x53C2;&#x6570;&#x4FE1;&#x606F;&#x5728;&#x521B;&#x5EFA;&#x89C6;&#x9891;&#x6E90;&#x4E4B;&#x540E;&#x53EF;&#x4EE5;&#x901A;&#x8FC7; cuvidGetSourceVideoFormat() &#x51FD;&#x6570;
+&#x83B7;&#x5F97;&#xFF0C;&#x5728; <code>InitVideoDecoder()</code> &#x51FD;&#x6570;&#x4E2D;&#x83B7;&#x53D6;&#x53C2;&#x6570;&#x6700;&#x8BE1;&#x5F02;&#x7684;&#x5730;&#x65B9;&#x5728;&#x4E8E; 111 &#x884C;&#x521B;&#x5EFA;&#x4E86;
+&#x4E00;&#x4E2A; CUVIDOFORMATEX &#x7C7B;&#x578B;&#x7684;&#x53D8;&#x91CF; <code>oFormatEx</code>&#xFF0C;&#x7136;&#x540E;&#x8BA9; <code>oFormat</code> &#x5F15;&#x7528;&#x8FD9;&#x4E2A;&#x53D8;&#x91CF;
+&#x7684; format &#x5B57;&#x6BB5;&#x3002;&#x5728;&#x8C03;&#x7528; <code>cuvidGetSourceVideoFormat</code> &#x4E4B;&#x540E;&#x7ADF;&#x7136;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x8BBF;&#x95EE;
+<code>oFormatEx</code> &#x8FD9;&#x4E2A;&#x53D8;&#x91CF;&#x7684; <code>raw_seqhdr_data</code> &#x5B57;&#x6BB5;&#xFF0C;&#x4E2A;&#x4EBA;&#x4F30;&#x8BA1;&#x5B83;&#x7684;&#x5185;&#x90E8;&#x5B9E;&#x73B0;&#x4F7F;&#x7528;&#x4E86;
+&#x7C7B;&#x4F3C; <code>container_of</code> &#x8FD9;&#x6837;&#x7684;&#x6280;&#x672F;&#x8BBF;&#x95EE;&#x4E86; <code>oFormatEx</code>&#x3002;&#x4F46;&#x662F;&#x4E3A;&#x4EC0;&#x4E48;&#x8FD9;&#x6837;&#x8BBE;&#x8BA1;&#x4E0D;&#x5F97;&#x800C;
+&#x77E5;&#x3002;</p>
+<p>&#x521B;&#x5EFA;&#x89E3;&#x7801;&#x5668;&#x7684;&#x51FD;&#x6570;&#x662F; <code>cuvidCreateDecoder()</code>&#xFF0C;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x539F;&#x578B;&#x5B9A;&#x4E49;&#x5728; cuviddec.h
+&#x6587;&#x4EF6;&#x4E2D;&#x3002;</p>
+<pre><code>cuvidcreatedecoder(cuvideodecoder *, CUVIDDECODECREATEINFO *);
+cuvidDestroyDecoder(CUvideodecoder);
+</code></pre>
+<p>&#x89E3;&#x7801;&#x5668;&#x7684;&#x53C2;&#x6570;&#x662F;&#x901A;&#x8FC7; <code>CUVIDDECODECREATEINFO</code> &#x4F20;&#x9012;&#x7684;&#xFF0C;&#x8FD9;&#x4E2A;&#x7ED3;&#x6784;&#x4F53;&#x7684;&#x5927;&#x90E8;&#x5206;&#x5B57;&#x6BB5;
+&#x90FD;&#x662F;&#x901A;&#x8FC7;&#x524D;&#x9762;&#x83B7;&#x5F97;&#x7684; <code>oFormat</code> &#x4E2D;&#x7684;&#x4FE1;&#x606F;&#x83B7;&#x5F97;&#x3002;</p>
+<h3 id="chuang-jian-shi-pin-yuan-de-jie-xi-qi">&#x521B;&#x5EFA;&#x89C6;&#x9891;&#x6E90;&#x7684;&#x89E3;&#x6790;&#x5668;</h3>
+<p>&#x521D;&#x59CB;&#x5316;&#x7684;&#x6700;&#x540E;&#x4E00;&#x6B65;&#x662F;&#x521B;&#x5EFA;&#x4E00;&#x4E2A;&#x89C6;&#x9891;&#x6E90;&#x7684;&#x89E3;&#x6790;&#x5668;&#xFF0C;&#x5176;&#x4E2D;&#x8BBE;&#x7F6E;&#x4E86;&#x4E09;&#x4E2A;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#xFF0C;
+<code>HandleVideoSequence</code>, <code>HandlePictureDecode</code>, <code>HandlePictureDisplay</code>, &#x5728;
+<code>nvidia</code> &#x7684;&#x6587;&#x6863;&#x4E2D;&#x5E76;&#x6CA1;&#x6709;&#x8BF4;&#x8FD9;&#x4E9B;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#x4F1A;&#x5728;&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x8C03;&#x7528;&#xFF0C;&#x4E5F;&#x6CA1;&#x6709;&#x8BF4;&#x660E;&#x8FD9;&#x4E9B;&#x56DE;&#x8C03;
+&#x51FD;&#x6570;&#x8981;&#x5B8C;&#x6210;&#x7684;&#x4E8B;&#x60C5;&#x662F;&#x4EC0;&#x4E48;&#xFF0C;&#x53EA;&#x80FD;&#x4ECE;&#x540D;&#x5B57;&#x4E2D;&#x731C;&#x6D4B; <code>HandlePictureDecode</code> &#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x662F;
+&#x7528;&#x6765;&#x89E3;&#x7801;&#x7684;&#x3002;</p>
+<h1 id="start">Start</h1>
+<p>&#x5728; <code>main</code> &#x51FD;&#x6570;&#x7684;&#x89E3;&#x7801;&#x7EBF;&#x7A0B;&#x51FD;&#x6570;&#x4E2D;&#x53EA;&#x8C03;&#x7528;&#x4E86; CudaDecoder &#x7C7B;&#x7684; Start &#x51FD;&#x6570;&#x3002;&#x800C;
+<code>Start</code> &#x51FD;&#x6570;&#x672C;&#x8EAB;&#x4E5F;&#x975E;&#x5E38;&#x7684;&#x7B80;&#x5355;&#xFF0C;&#x53EA;&#x4E0D;&#x8FC7;&#x8C03;&#x7528;&#x4E86; cuvidSetVideoSourceState() &#x628A;&#x72B6;
+&#x6001;&#x53D8;&#x6210; cudaVideoState_Started &#x7136;&#x540E;&#x4E00;&#x76F4;&#x53D6;&#x72B6;&#x6001;&#x76F4;&#x5230;&#x72B6;&#x6001;&#x4E0D;&#x518D;&#x662F; <code>started</code>&#x3002;</p>
+<p>&#x4ECE;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x5B9E;&#x73B0;&#x6765;&#x770B;&#xFF0C;&#x5B83;&#x7684;&#x5185;&#x90E8;&#x5E94;&#x8BE5;&#x5728;&#x628A;&#x89C6;&#x9891;&#x6E90;&#x8BBE;&#x7F6E;&#x4E3A;
+<code>cudaVideoState_Started</code> &#x72B6;&#x6001;&#x4E4B;&#x540E;&#x5F00;&#x59CB;&#x8BFB;&#x53D6;&#x89C6;&#x9891;&#x6E90;&#xFF08;&#x6587;&#x4EF6;&#xFF09;&#x4E2D;&#x7684;&#x6570;&#x636E;&#x3002;&#x7136;&#x540E;&#x901A;&#x8FC7;
+&#x56DE;&#x8C03;&#x51FD;&#x6570;&#x8FDB;&#x884C;&#x5904;&#x7406;&#x3002;&#x5E94;&#x8BE5;&#x662F;&#x9996;&#x5148;&#x8C03;&#x7528; <code>HandleVideoData()</code>, &#x4E2A;&#x4EBA;&#x731C;&#x6D4B;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x5728;&#x6570;
+&#x636E;&#x4ECE;&#x6587;&#x4EF6;&#x4E2D;&#x8BFB;&#x53D6;&#x51FA;&#x6765;&#x4E4B;&#x540E;&#x4F1A;&#x88AB;&#x8C03;&#x7528;&#x6765;&#x89E3;&#x6790;&#x539F;&#x59CB;&#x6570;&#x636E;&#xFF0C;<code>HandleVideoSequence</code> &#x8FD9;&#x4E2A;&#x51FD;
+&#x6570;&#x6CA1;&#x6709;&#x592A;&#x5927;&#x7684;&#x7528;&#x9014;&#xFF0C;&#x53EA;&#x662F;&#x4E00;&#x4E9B;&#x53C2;&#x6570;&#x7684;&#x68C0;&#x6D4B;&#x800C;&#x5DF2;&#x3002;<code>HandlePictureDecode</code> &#x5E94;&#x8BE5;&#x662F;&#x5728;&#x6210;
+&#x529F;&#x89E3;&#x6790;&#x5230;&#x6570;&#x636E;&#x5E27;&#x7684;&#x65F6;&#x5019;&#x8C03;&#x7528;&#xFF0C;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x8C03;&#x7528;&#x4E86; <code>cuvidDecodePicture</code> &#x89E3;&#x7801;&#x6570;&#x636E;&#x3002;&#x6570;
+&#x636E;&#x89E3;&#x7801;&#x51FA;&#x6765;&#x4E4B;&#x540E;&#x4F1A;&#x8C03;&#x7528; <code>HandlePictureDisplay</code> &#x51FD;&#x6570;&#xFF0C;&#x8BE5;&#x51FD;&#x6570;&#x628A;&#x6570;&#x636E;&#x653E;&#x5165;&#x5230;&#x6570;&#x636E;&#x7F13;
+&#x51B2;&#x533A; <code>FrameQueue</code> &#x4E2D;&#x4EE5;&#x4FBF;&#x7F16;&#x7801;&#x5668;&#x80FD;&#x591F;&#x628A;&#x6570;&#x636E;&#x53D6;&#x51FA;&#x6765;&#x3002;</p>
+<h1 id="zong-jie">&#x603B;&#x7ED3;</h1>
+<p>&#x4F7F;&#x7528; CudaDecoder &#x9996;&#x5148;&#x9700;&#x8981;&#x8C03;&#x7528; cuvidCreateVideoSource &#x521B;&#x5EFA;&#x4E00;&#x4E2A;&#x6587;&#x4EF6;&#x89C6;&#x9891;&#x6E90;&#xFF0C;
+&#x7136;&#x540E;&#x8C03;&#x7528; <code>cuvidGetSourceVideoFormat</code> &#x4ECE;&#x6587;&#x4EF6;&#x4E2D;&#x8BFB;&#x53D6;&#x89E3;&#x7801;&#x53C2;&#x6570;&#x4FE1;&#x606F;&#x5E76;&#x4F7F;&#x7528;&#x53C2;&#x6570;&#x4FE1;
+&#x606F;&#x521B;&#x5EFA;&#x4E00;&#x4E2A; <code>CUvideodecoder</code> &#x89E3;&#x7801;&#x5668;&#xFF0C;&#x4E4B;&#x540E;&#x518D;&#x521B;&#x5EFA;&#x4E00;&#x4E2A;&#x89C6;&#x9891;&#x6E90;&#x89E3;&#x6790;&#x5668;&#xFF0C;&#x8BBE;&#x7F6E;&#x56DE;&#x8C03;&#x51FD;
+&#x6570;&#x5904;&#x7406;&#x89C6;&#x9891;&#x7684;&#x89E3;&#x7801;&#x3002;</p>
+<p>&#x4E0A;&#x9762;&#x7684;&#x521D;&#x59CB;&#x5316;&#x5B8C;&#x6210;&#x4E4B;&#x540E;&#x8C03;&#x7528; <code>cuvidSetVideoSourceState</code> &#x628A;&#x89C6;&#x9891;&#x6E90;&#x7684;&#x72B6;&#x6001;&#x8BBE;&#x7F6E;&#x4E3A;
+<code>cudaVideoState_Started</code>&#xFF0C;&#x4E4B;&#x540E;&#x5E93;&#x7684;&#x5185;&#x90E8;&#x4F1A;&#x5F00;&#x59CB;&#x8BFB;&#x6587;&#x4EF6;&#xFF0C;&#x628A;&#x8BFB;&#x53D6;&#x7684;&#x6570;&#x636E;&#x4EA4;&#x7ED9;
+<code>HandleVideoData</code> &#x89E3;&#x6790;&#xFF0C;&#x89E3;&#x6790;&#x5B8C;&#x6210;&#x4E4B;&#x540E;&#x4F1A;&#x628A;&#x6570;&#x636E;&#x4EA4;&#x7ED9; <code>HandlePictureDecode</code> &#x8C03;
+&#x7528; <code>cuvidDecodePicture</code> &#x8FDB;&#x884C;&#x89E3;&#x7801;&#x3002;&#x5728;&#x89E3;&#x7801;&#x5B8C;&#x6210;&#x4E4B;&#x540E;&#x8C03;&#x7528;
+<code>HandlePictureDisplay</code> &#x628A;&#x6570;&#x636E;&#x653E;&#x5165;&#x5230; FrameQueue &#x7F13;&#x51B2;&#x533A;&#x91CC;&#x9762;&#x3002;</p>
+<h1 id="bu-chong-video-source-he-nvcuvid">&#x8865;&#x5145;&#xFF1A;video source &#x548C; nvcuvid</h1>
+<p>&#x5728; SDK &#x7ED9;&#x51FA;&#x7684;&#x4F8B;&#x5B50;&#x4E2D;&#xFF0C;&#x6570;&#x636E;&#x662F;&#x901A;&#x8FC7; <code>video source</code> &#x63A5;&#x53E3;&#x6765;&#x63D0;&#x4F9B;&#x7684;&#x3002;&#x4F46;&#x662F;&#x8FD9;&#x5E76;&#x4E0D;&#x610F;
+&#x5473;&#x7740;&#x6211;&#x4EEC;&#x5728;&#x7F16;&#x5199;&#x7A0B;&#x5E8F;&#x7684;&#x65F6;&#x5019;&#x53EA;&#x80FD;&#x4F7F;&#x7528;&#x5B83;&#x63D0;&#x4F9B;&#x7684; <code>video source</code> &#x63A5;&#x53E3;&#x3002;&#x6839;&#x636E;<a href="http://docs.nvidia.com/cuda/video-decoder/#axzz3mWQbRpKv" target="_blank" rel="external">&#x5B98;&#x65B9;&#x6587;
+&#x6863; </a>&#x4E2D;&#x7B2C;&#x4E09;&#x5C0F;&#x8282;&#x6700;&#x540E;&#x7ED9;&#x51FA;&#x7684;&#x89E3;&#x91CA;</p>
+<blockquote>
+<p>Note: The low level decode APIs are supported on both Linux and Windows
+platforms. The NVCUVID APIs for Parsing and Source Stream input are
+available only on Windows platforms.</p>
+</blockquote>
+<p>NVCUVID &#x7684; <code>video source</code> &#x53EA;&#x5728; <code>windows</code> &#x5E73;&#x53F0;&#x53EF;&#x7528;&#xFF0C;&#x4E0D;&#x8FC7;&#x4ECE;&#x6700;&#x65B0;&#x7684;
+<code>nvenc_sdk</code> &#x7684;&#x4EE3;&#x7801;&#x6765;&#x770B;&#xFF0C;videosource &#x548C; sourcepraser &#x5728; linux &#x5E73;&#x53F0;&#x4E0B;&#x4E5F;&#x662F;&#x53EF;
+&#x7528;&#x7684;&#x3002;&#x53EA;&#x4E0D;&#x8FC7;&#x4ECE;&#x63A5;&#x53E3;&#x6765;&#x770B;&#xFF0C;&#x8FD9;&#x4E24;&#x4E2A; API &#x53EA;&#x80FD;&#x7528;&#x4E8E;&#x6587;&#x4EF6;&#x7684;&#x89E3;&#x6790;&#x3002;</p>
+<p>&#x5728;&#x6587;&#x6863;&#x7684;&#x7B2C;&#x56DB;&#x5C0F;&#x8282; 4.2 &#x4E2D;&#x6709;&#x8FD9;&#x4E48;&#x4E00;&#x6BB5;&#x8BDD;&#xFF1A;</p>
+<blockquote>
+<p>For Linux platforms, you will need to write your own video source and
+parsing functions that connect to the Video Decoding functions.</p>
+</blockquote>
+<p>&#x8FD9;&#x4E00;&#x70B9;&#x660E;&#x786E;&#x8BF4;&#x660E;&#xFF0C;&#x5176;&#x5B9E;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x4E0D;&#x4F7F;&#x7528;&#x5B83;&#x672C;&#x8EAB;&#x7684; <code>video source</code> &#x63A5;&#x53E3;&#xFF0C;&#x4F7F;&#x7528;&#x81EA;&#x5DF1;&#x7684;
+&#x63A5;&#x53E3;&#x63D0;&#x4F9B;&#x89C6;&#x9891;&#x6E90;&#xFF0C;&#x7136;&#x540E;&#x4F7F;&#x7528; <code>nvcuvid</code> &#x6700;&#x5E95;&#x5C42;&#x7684;&#x89E3;&#x7801;&#x63A5;&#x53E3;&#x5BF9;&#x6570;&#x636E;&#x8FDB;&#x884C;&#x89E3;&#x7801;&#x548C;&#x540E;&#x7EED;&#x5904;
+&#x7406;&#x3002;</p>
+<h1 id="map">MAP</h1>
+<p>&#x5728; nvcuvid &#x7684;&#x5B98;&#x65B9;&#x6587;&#x6863;&#x4E2D;&#x7ED9;&#x51FA;&#x7684;&#x63A5;&#x53E3;&#x4E2D;&#xFF0C;&#x6700;&#x8BE1;&#x5F02;&#x7684;&#x4E24;&#x4E2A;&#x63A5;&#x53E3;&#x662F;</p>
+<pre><code>cuvidMapVideoFrame()
+cuvidUnmapVideoFrame()
+</code></pre>
+<p>&#x8FD9;&#x4E24;&#x4E2A;&#x51FD;&#x6570;&#x597D;&#x50CF;&#x662F;&#x7528;&#x4E8E;&#x5904;&#x7406;&#x89E3;&#x7801;&#x4E4B;&#x540E;&#x7684;&#x6570;&#x636E;&#x7684;&#xFF0C;&#x4F46;&#x662F;&#x8FD9;&#x5176;&#x4E2D;&#x7684;&#x539F;&#x7406;&#x662F;&#x4EC0;&#x4E48;&#x5E76;&#x4E0D;&#x6E05;&#x695A;&#xFF0C;
+&#x6709;&#x5F85;&#x540E;&#x7EED;&#x7814;&#x7A76;&#x3002;</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/GPU/" rel="tag"># GPU</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/10/07/gpgpu/" rel="next" title="英伟达硬件加速编解码器的介绍">
+                <i class="fa fa-chevron-left"></i> 英伟达硬件加速编解码器的介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/10/07/nvenc_ffmpeg_usage/" rel="prev" title="英伟达硬件加速解码器在 FFMPEG 中的使用">
+                英伟达硬件加速解码器在 FFMPEG 中的使用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#jie-ma-qi-de-dai-ma-fen-xi"><span class="nav-number">1.</span> <span class="nav-text">解码器的代码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#main"><span class="nav-number">2.</span> <span class="nav-text">main</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#videodecoder-cpp"><span class="nav-number">3.</span> <span class="nav-text">VideoDecoder.cpp</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#initvideodecoder"><span class="nav-number">3.1.</span> <span class="nav-text">InitVideoDecoder</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#chuang-jian-shi-pin-yuan"><span class="nav-number">3.1.1.</span> <span class="nav-text">创建视频源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#huo-qu-shi-pin-yuan-de-can-shu-bing-chuang-jian-cuvid-ku-de-jie-ma-qi"><span class="nav-number">3.1.2.</span> <span class="nav-text">获取视频源的参数，并创建 cuvid 库的解码器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chuang-jian-shi-pin-yuan-de-jie-xi-qi"><span class="nav-number">3.1.3.</span> <span class="nav-text">创建视频源的解析器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#start"><span class="nav-number">4.</span> <span class="nav-text">Start</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zong-jie"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bu-chong-video-source-he-nvcuvid"><span class="nav-number">6.</span> <span class="nav-text">补充：video source 和 nvcuvid</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#map"><span class="nav-number">7.</span> <span class="nav-text">MAP</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

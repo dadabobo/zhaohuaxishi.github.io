@@ -1,0 +1,711 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="前一段时间学习 Python，被这门语言的便利性惊艳到了，比如你可以这样产生一个字
+符串：
+12# output &quot;hello world, PI is 3.14&quot;&quot;&amp;#123;&amp;#125; world, PI is &amp;#123;&amp;#125;&quot;.format(&quot;hello&quot;, 3.14)
+最近学习C++标准库，看到C++11新的变参模板，发现它可以用来实现一个简单的类似
+Python 风格字符串格">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++中实现简单的Python风格字符串格式化函数">
+<meta property="og:url" content="http://blog.guorongfei.com/2016/03/10/python-like-str-formater-in-cpp/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="前一段时间学习 Python，被这门语言的便利性惊艳到了，比如你可以这样产生一个字
+符串：
+12# output &quot;hello world, PI is 3.14&quot;&quot;&amp;#123;&amp;#125; world, PI is &amp;#123;&amp;#125;&quot;.format(&quot;hello&quot;, 3.14)
+最近学习C++标准库，看到C++11新的变参模板，发现它可以用来实现一个简单的类似
+Python 风格字符串格">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++中实现简单的Python风格字符串格式化函数">
+<meta name="twitter:description" content="前一段时间学习 Python，被这门语言的便利性惊艳到了，比如你可以这样产生一个字
+符串：
+12# output &quot;hello world, PI is 3.14&quot;&quot;&amp;#123;&amp;#125; world, PI is &amp;#123;&amp;#125;&quot;.format(&quot;hello&quot;, 3.14)
+最近学习C++标准库，看到C++11新的变参模板，发现它可以用来实现一个简单的类似
+Python 风格字符串格">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2016/03/10/python-like-str-formater-in-cpp/"/>
+
+
+
+
+
+  <title> C++中实现简单的Python风格字符串格式化函数 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2016/03/10/python-like-str-formater-in-cpp/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                C++中实现简单的Python风格字符串格式化函数
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-03-10T16:44:04+08:00">
+                2016-03-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#x524D;&#x4E00;&#x6BB5;&#x65F6;&#x95F4;&#x5B66;&#x4E60; <code>Python</code>&#xFF0C;&#x88AB;&#x8FD9;&#x95E8;&#x8BED;&#x8A00;&#x7684;&#x4FBF;&#x5229;&#x6027;&#x60CA;&#x8273;&#x5230;&#x4E86;&#xFF0C;&#x6BD4;&#x5982;&#x4F60;&#x53EF;&#x4EE5;&#x8FD9;&#x6837;&#x4EA7;&#x751F;&#x4E00;&#x4E2A;&#x5B57;
+&#x7B26;&#x4E32;&#xFF1A;</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># output &quot;hello world, PI is 3.14&quot;</span></div><div class="line"><span class="string">&quot;{} world, PI is {}&quot;</span>.format(<span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>)</div></pre></td></tr></table></figure>
+<p>&#x6700;&#x8FD1;&#x5B66;&#x4E60;C++&#x6807;&#x51C6;&#x5E93;&#xFF0C;&#x770B;&#x5230;C++11&#x65B0;&#x7684;&#x53D8;&#x53C2;&#x6A21;&#x677F;&#xFF0C;&#x53D1;&#x73B0;&#x5B83;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x5B9E;&#x73B0;&#x4E00;&#x4E2A;&#x7B80;&#x5355;&#x7684;&#x7C7B;&#x4F3C;
+<code>Python</code> &#x98CE;&#x683C;&#x5B57;&#x7B26;&#x4E32;&#x683C;&#x5F0F;&#x5316;&#x51FD;&#x6570;<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>&#xFF0C;&#x8BED;&#x6CD5;&#x5982;&#x4E0B;&#xFF1A;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// output &quot;hello world, PI is 3.14&quot;</span></div><div class="line">FormateString(<span class="string">&quot;{} world, PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>)</div></pre></td></tr></table></figure>
+<p>&#x672C;&#x6587;&#x8BB2;&#x89E3;&#x4E00;&#x4E2A;&#x975E;&#x5E38;&#x7B80;&#x5355;&#x7684;&#x5B9E;&#x73B0;&#x7248;&#x672C;&#xFF0C;&#x4E0D;&#x5904;&#x7406;&#x4E0B;&#x9762;&#x8FD9;&#x6837;&#x7684;&#x8BED;&#x6CD5;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// output &quot;say you say me&quot;</span></div><div class="line">FormateString(<span class="string">&quot;{0} you {0} me&quot;</span>, <span class="string">&quot;say&quot;</span>)</div></pre></td></tr></table></figure>
+<p>&#x5982;&#x679C;&#x4F60;&#x9700;&#x8981;&#x4E00;&#x4E2A;&#x4E30;&#x5BCC;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x683C;&#x5F0F;&#x5316;&#x529F;&#x80FD;&#xFF0C;&#x53EF;&#x4EE5;&#x8003;&#x8651;&#x4F7F;&#x7528;<a href="https://github.com/cppformat/cppformat" target="_blank" rel="external">cppformat</a>&#x8FD9;&#x4E2A;&#x5E93;&#x3002;</p>
+<a id="more"></a>
+<h1 id="ju-ti-shi-xian">&#x5177;&#x4F53;&#x5B9E;&#x73B0;</h1>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;&#x56E0;&#x4E3A;&#x4F7F;&#x7528;&#x4E86;C++11&#x4E2D;&#x7684;&#x65B0;&#x7279;&#x6027;&#xFF0C;&#x4F60;&#x9700;&#x8981;&#x4E00;&#x4E2A;C++11&#x7F16;&#x8BD1;&#x5668;&#xFF0C;&#x901A;&#x5E38;&#x4F60;&#x9700;&#x8981;&#x5728;&#x7F16;&#x8BD1;&#x7684;&#x65F6;
+&#x5019;&#x8BBE;&#x7F6E; <code>-std=c++11</code>&#x3002;&#x672C;&#x6587;&#x5B9E;&#x73B0;&#x7684;&#x7248;&#x672C;&#x6E90;&#x7801;&#x53EF;&#x4EE5;&#x5728;<a href="https://github.com/zhaohuaxishi/code-snippet/" target="_blank" rel="external">&#x6211;&#x7684;&#x4EE3;&#x7801;&#x5E93;</a>&#x4E2D;&#x627E;&#x5230;</strong></p>
+<p>&#x57FA;&#x672C;&#x7684;&#x5B9E;&#x73B0;&#x601D;&#x8DEF;&#x662F;&#x4F7F;&#x7528;&#x53D8;&#x53C2;&#x6A21;&#x677F;&#x6355;&#x83B7;&#x683C;&#x5F0F;&#x8BF4;&#x660E;&#x7B26;&#x4E4B;&#x5916;&#x7684;&#x6240;&#x6709;&#x53C2;&#x6570;&#xFF0C;&#x7136;&#x540E;&#x4F9D;&#x6B21;&#x628A;&#x4ED6;&#x4EEC;&#x901A;&#x8FC7;
+<code>stringstream</code> &#x62FC;&#x63A5;&#x5728;&#x4E00;&#x8D77;&#xFF0C;&#x6700;&#x7EC8;&#x8FD4;&#x56DE;&#x62FC;&#x63A5;&#x7684;&#x7ED3;&#x679C;&#xFF0C;&#x51FD;&#x6570;&#x7684;&#x58F0;&#x660E;&#x5982;&#x4E0B;&#xFF1A;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Types&gt;</div><div class="line"><span class="keyword">const</span> <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> <span class="title">FormatString</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; fmt_spec,</span></span></div><div class="line">                               <span class="keyword">const</span> Types&amp;... args);</div></pre></td></tr></table></figure>
+<p>&#x8BE5;&#x51FD;&#x6570;&#x5B9E;&#x73B0;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Types&gt;</div><div class="line"><span class="keyword">const</span> <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> <span class="title">FormatString</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; fmt_spec,</span></span></div><div class="line">                               <span class="keyword">const</span> Types&amp;... args) {</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">stringstream</span> builder;</div><div class="line">    BuildFormatString(builder, fmt_spec, args...);</div><div class="line">    <span class="keyword">return</span> builder.str();</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x8BE5;&#x51FD;&#x6570;&#x58F0;&#x660E;&#x4E00;&#x4E2A;&#x7528;&#x4E8E;&#x6784;&#x9020;&#x5B57;&#x7B26;&#x4E32;&#x7684; <code>stringstream</code>&#xFF0C;&#x7136;&#x540E;&#x901A;&#x8FC7;&#x8C03;&#x7528;&#x8F85;&#x52A9;&#x51FD;&#x6570;
+<code>BuildFormatString</code> &#x5B8C;&#x6210;&#x6700;&#x7EC8;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x683C;&#x5F0F;&#x5316;&#xFF0C;&#x4E4B;&#x6240;&#x4EE5;&#x8FD9;&#x6837;&#x505A;&#x7684;&#x539F;&#x56E0;&#x662F;&#x53EF;&#x4EE5;&#x628A;
+<code>builder</code> &#x901A;&#x8FC7;&#x5F15;&#x7528;&#x4F20;&#x9012;&#xFF0C;&#x4ECE;&#x800C;&#x4E0D;&#x7528;&#x5728;&#x540E;&#x7EED;&#x7684;&#x9012;&#x5F52;&#x4E2D;&#x4E00;&#x6B21;&#x4E00;&#x6B21;&#x7684;&#x58F0;&#x660E;&#x4E34;&#x65F6;
+<code>stringstream</code>&#x53D8;&#x91CF;&#x3002;<code>BuildFormatString</code> &#x4F7F;&#x7528;&#x9012;&#x5F52;&#x7684;&#x65B9;&#x5F0F;&#x5B9E;&#x73B0;&#x5B57;&#x7B26;&#x4E32;&#x7684;&#x683C;&#x5F0F;&#x5316;&#xFF0C;&#x5177;&#x4F53;
+&#x5B9E;&#x73B0;&#x5982;&#x4E0B;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">BuildFormatString</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">stringstream</span>&amp; builder,</span></span></div><div class="line">                       <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; fmt_spec) {</div><div class="line">    builder &lt;&lt; fmt_spec;</div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Types&gt;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">BuildFormatString</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">stringstream</span>&amp; builder,</span></span></div><div class="line">                       <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; fmt_spec,</div><div class="line">                       <span class="keyword">const</span> T&amp; first,</div><div class="line">                       <span class="keyword">const</span> Types&amp;... args) {</div><div class="line">    <span class="keyword">auto</span> pos = fmt_spec.find_first_of(<span class="string">&quot;{}&quot;</span>);</div><div class="line">    <span class="keyword">if</span> (pos &gt; fmt_spec.length()) {</div><div class="line">        builder &lt;&lt; fmt_spec;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    }</div><div class="line"></div><div class="line">    builder &lt;&lt; fmt_spec.substr(<span class="number">0</span>, pos);</div><div class="line">    builder &lt;&lt; first;</div><div class="line">    BuildFormatString(builder, fmt_spec.substr(pos + <span class="number">2</span>), args...);</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x5176;&#x4E2D;&#x7B2C;&#x4E00;&#x4E2A;&#x666E;&#x901A;&#x51FD;&#x6570;&#xFF08;&#x975E;&#x6A21;&#x677F;&#x51FD;&#x6570;&#xFF09;&#x7528;&#x6765;&#x7EC8;&#x6B62;&#x9012;&#x5F52;&#x3002;&#x8FD9;&#x79CD;&#x5B9E;&#x73B0;&#x65B9;&#x5F0F;&#x53EA;&#x8981;&#x53C2;&#x6570;&#x652F;&#x6301;
+<code>stringstream</code> &#x7684;&#x8F93;&#x51FA;&#x64CD;&#x4F5C;&#x5C31;&#x53EF;&#x4EE5;&#x6B63;&#x5E38;&#x7684;&#x8FD0;&#x884C;&#x3002;&#x8FD9;&#x4E2A;&#x7248;&#x672C;&#x5E76;&#x6CA1;&#x6709;&#x505A;&#x8FC7;&#x4F18;&#x5316;&#xFF0C;&#x6BD4;&#x5982;&#x5B83;&#x6BCF;
+&#x4E00;&#x6B21;&#x8C03;&#x7528; <code>BuildFormatString</code> &#x90FD;&#x4F1A;&#x4EA7;&#x751F;&#x4E00;&#x4E2A; <code>std::string</code> &#x7C7B;&#x578B;&#x7684;&#x4E34;&#x65F6;&#x53D8;&#x91CF;&#x7528;&#x4E8E;&#x5B58;&#x653E;
+&#x683C;&#x5F0F;&#x5316;&#x8BF4;&#x660E;&#x7B26; <code>fmt_spec</code>&#x3002;&#x53EF;&#x4EE5;&#x8003;&#x8651;&#x901A;&#x8FC7;&#x589E;&#x52A0;&#x4E00;&#x4E2A; pos &#x53C2;&#x6570;&#x6765;&#x89E3;&#x51B3;&#x8FD9;&#x4E2A;&#x95EE;&#x9898;&#xFF0C;&#x6216;&#x8005;&#x662F;&#x4F7F;
+&#x7528; <code>const char*</code> &#x66FF;&#x4EE3; <code>std::string</code> &#x4F5C;&#x4E3A;&#x683C;&#x5F0F;&#x8BF4;&#x660E;&#x7B26;&#x7684;&#x7C7B;&#x578B;&#x3002;&#x6B64;&#x5916; <code>builder &lt;&lt; fmt_spec.substr(0, pos)</code> &#x4E2D;&#x7684;&#x5B50;&#x4E32;&#x751F;&#x6210;<del>&#x53EF;&#x4EE5;&#x901A;&#x8FC7;&#x5FAA;&#x73AF;&#x53D6;&#x4EE3;</del>&#x3002;<strong>&#x4E8B;&#x5B9E;&#x4E0A;&#x76F4;&#x63A5;
+&#x4F7F;&#x7528;&#x5FAA;&#x73AF;&#x4E0D;&#x4F1A;&#x7ED9;&#x6027;&#x80FD;&#x5E26;&#x6765;&#x4EFB;&#x4F55;&#x7684;&#x4F18;&#x5316;&#xFF0C;&#x56E0;&#x4E3A;&#x5B57;&#x7B26;&#x7684;&#x6574;&#x5757;&#x5904;&#x7406;&#x6BD4;&#x5FAA;&#x73AF;&#x5355;&#x5B57;&#x7B26;&#x5904;&#x7406;&#x8981;&#x5FEB;&#x5F88;&#x591A;&#xFF0C;
+&#x5BF9;&#x4E8E;&#x4F18;&#x5316;&#x95EE;&#x9898;&#x53EF;&#x4EE5;&#x53C2;&#x8003;&#x540E;&#x9762;&#x4E00;&#x5C0F;&#x8282;</strong></p>
+<h1 id="ce-shi-jie-guo">&#x6D4B;&#x8BD5;&#x7ED3;&#x679C;</h1>
+<p>&#x7B80;&#x5355;&#x7684;&#x6D4B;&#x8BD5;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></div><div class="line">{</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot; world!&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world!&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world! PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world! PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x8F93;&#x51FA;&#x7ED3;&#x679C;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">world!</div><div class="line">hello world!</div><div class="line">hello world! PI is <span class="number">3.14</span></div><div class="line">hello world! PI is {}</div></pre></td></tr></table></figure>
+<p>&#x5982;&#x679C; &apos;{}&apos; &#x5360;&#x4F4D;&#x7B26;&#x591A;&#x4E8E;&#x5B9E;&#x9645;&#x63D0;&#x4F9B;&#x7684;&#x53C2;&#x6570;&#xFF0C;&#x5360;&#x4F4D;&#x7B26;&#x4F1A;&#x88AB;&#x4FDD;&#x7559;&#xFF0C;&#x53CD;&#x4E4B;&#x5982;&#x679C;&#x53C2;&#x6570;&#x591A;&#x4E8E;&#x5360;&#x4F4D;&#x7B26;&#xFF0C;&#x53C2;
+&#x6570;&#x4F1A;&#x88AB;&#x5FFD;&#x7565;&#x3002;</p>
+<h1 id="you-hua">&#x4F18;&#x5316;</h1>
+<p><strong>2016-03-24&#x66F4;&#x65B0;&#xFF0C;&#x4E4B;&#x524D;&#x8FD9;&#x4E2A;&#x7248;&#x672C;&#x6CA1;&#x6709;&#x4F18;&#x5316;&#x8FC7;&#xFF0C;&#x540E;&#x7EED;&#x51FA;&#x4E8E;&#x6027;&#x80FD;&#x8C03;&#x4F18;&#x7684;&#x8003;&#x8651;&#xFF0C;&#x505A;&#x4E86;&#x4E00;&#x70B9;&#x70B9;&#x5C0F;
+&#x7684;&#x6539;&#x52A8;&#xFF0C;&#x8BB0;&#x5F55;&#x5728;&#x6B64;&#x3002;</strong></p>
+<h2 id="shi-yong-ostringstream-ti-dai-stringstrem">&#x4F7F;&#x7528; <code>ostringstream</code> &#x66FF;&#x4EE3; <code>stringstrem</code></h2>
+<p>&#x4E0A;&#x4E00;&#x4E2A;&#x7248;&#x672C;&#x4E2A;&#x4EBA;&#x758F;&#x5FFD;&#xFF0C;&#x4F7F;&#x7528;&#x4E86; <code>stringstream</code> &#x4F5C;&#x4E3A;&#x5B57;&#x7B26;&#x4E32;&#x7684;<code>builder</code>&#xFF0C;&#x4F46;&#x662F;&#x5B9E;&#x9645;&#x4E0A;&#x6211;&#x4EEC;
+&#x53EA;&#x662F;&#x4F7F;&#x7528;&#x5B83;&#x4F5C;&#x4E3A;&#x8F93;&#x51FA;&#x7F13;&#x51B2;&#x533A;&#xFF0C;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x4F7F;&#x7528; <code>ostringstream</code> &#x66FF;&#x4EE3;&#x3002;</p>
+<h2 id="find-first-of-fan-hui-zhi-xiu-zheng"><code>find_first_of</code> &#x8FD4;&#x56DE;&#x503C;&#x4FEE;&#x6B63;</h2>
+<p><code>find_first_of</code> &#x5728;&#x67E5;&#x627E;&#x5931;&#x8D25;&#x7684;&#x758F;&#x5FFD;&#x8FD4;&#x56DE;&#x7684;&#x662F; <code>string::npos</code> &#x901A;&#x5E38;&#x8FD9;&#x4E2A;&#x503C;&#x88AB;&#x5B9A;&#x4E49;&#x4E3A; <code>-1</code>
+&#xFF0C;&#x4F46;&#x662F;&#x56E0;&#x4E3A;&#x5B83;&#x7684;&#x7C7B;&#x578B; <code>string::size_type</code> &#x901A;&#x5E38;&#x662F;&#x4E00;&#x4E2A;&#x65E0;&#x7B26;&#x53F7;&#x6570;&#xFF0C;&#x6240;&#x4EE5; <code>npos</code> &#x53D8;&#x6210;&#x4E86;&#x80FD;
+&#x8868;&#x793A;&#x7684;&#x6700;&#x5927;&#x503C;&#xFF0C;&#x6240;&#x4EE5;&#x4E4B;&#x524D;&#x7684; <code>pos &gt; fmt_spec.length()</code> &#x5224;&#x65AD;&#x624D;&#x80FD;&#x6B63;&#x5E38;&#x5DE5;&#x4F5C;&#xFF0C;&#x4F46;&#x662F;&#x8FD9;&#x5E76;&#x4E0D;
+&#x662F;&#x53EF;&#x79FB;&#x690D;&#x7684;&#x65B9;&#x5F0F;&#xFF0C;&#x6B63;&#x786E;&#x7684;&#x5199;&#x6CD5;&#x5E94;&#x8BE5;&#x662F;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (pos == <span class="built_in">std</span>::<span class="built_in">string</span>::npos) {</div><div class="line">}</div></pre></td></tr></table></figure>
+<h2 id="shi-yong-ostringstream-write-qu-diao-qian-zhui-zi-chuan-de-chuang-jian">&#x4F7F;&#x7528; <code>ostringstream::write</code> &#x53BB;&#x6389;&#x524D;&#x7F00;&#x5B50;&#x4E32;&#x7684;&#x521B;&#x5EFA;</h2>
+<p>&#x4E4B;&#x524D;&#x7684;&#x7248;&#x672C;&#x4E2D;&#x4E3A;&#x4E86;&#x8F93;&#x5165;&#x524D;&#x7F00;&#x5B50;&#x4E32;&#x4F7F;&#x7528;&#x4E86; <code>builder &lt;&lt; fmt_spec.substr(0, pos);</code> &#x8FD9;&#x6837;&#x7684;
+&#x8BED;&#x53E5;&#xFF0C;&#x5B83;&#x4F7F;&#x5F97;&#x6BCF;&#x4E00;&#x6B21;&#x524D;&#x7F00;&#x8F93;&#x5165;&#x90FD;&#x9700;&#x8981;&#x751F;&#x6210;&#x4E00;&#x4E2A;&#x524D;&#x7F00;&#x5B50;&#x4E32;&#x3002;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>write</code> &#x6210;&#x5458;&#x51FD;&#x6570;
+&#x53BB;&#x6389;&#x8FD9;&#x4E2A;&#x5B50;&#x4E32;&#x7684;&#x521B;&#x5EFA;&#xFF0C;&#x76F4;&#x63A5;&#x5199;&#x5165; <code>string</code> &#x4E2D;&#x7684;&#x4E00;&#x5757;&#x5185;&#x5BB9;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">builder.write(fmt_spec.data(), pos);</div></pre></td></tr></table></figure>
+<h2 id="shi-yong-wei-zhi-xia-biao-qu-diao-hou-zhui-zi-chuan-de-chuang-jian">&#x4F7F;&#x7528;&#x4F4D;&#x7F6E;&#x4E0B;&#x6807;&#x53BB;&#x6389;&#x540E;&#x7F00;&#x5B50;&#x4E32;&#x7684;&#x521B;&#x5EFA;</h2>
+<p>&#x5728;&#x4E4B;&#x524D;&#x5904;&#x7406;&#x5B8C;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#x4E4B;&#x540E;&#xFF0C;&#x901A;&#x8FC7;&#x9012;&#x5F52;&#x7684;&#x65B9;&#x5F0F;&#x5904;&#x7406;&#x4E0B;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">BuildFormatString(builder, fmt_spec.substr(pos + <span class="number">2</span>), args...);</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x4E2A;&#x9012;&#x5F52;&#x8C03;&#x7528;&#x7684;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x4F1A;&#x4EA7;&#x751F;&#x4E00;&#x4E2A;&#x4E34;&#x65F6;&#x53D8;&#x91CF;&#xFF0C;&#x8FD9;&#x4E2A;&#x53D8;&#x91CF;&#x5176;&#x5B9E;&#x53EF;&#x4EE5;&#x901A;&#x8FC7;&#x4F4D;&#x7F6E;&#x4E0B;&#x6807;&#x53BB;&#x6389;&#xFF0C;
+&#x505A;&#x6CD5;&#x662F;&#x66F4;&#x6539;&#x51FD;&#x6570;&#x7684;&#x7B7E;&#x540D;&#xFF0C;&#x8BA9;&#x4ED6;&#x63A5;&#x53D7;&#x4E00;&#x4E2A;&#x989D;&#x5916;&#x7684;&#x53C2;&#x6570;&#x5982;&#x4E0B;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Types&gt;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">BuildFormatString</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">ostringstream</span>&amp; builder, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; fmt_spec,</span></span></div><div class="line">                       <span class="built_in">std</span>::<span class="built_in">string</span>::size_type idx, <span class="keyword">const</span> T&amp; first,</div><div class="line">                       <span class="keyword">const</span> Types&amp;... args);</div></pre></td></tr></table></figure>
+<p>&#x67E5;&#x627E;&#x7684;&#x5360;&#x4F4D;&#x7B26;&#x7684;&#x65F6;&#x5019;&#x4F7F;&#x7528;&#x5E26;&#x4F4D;&#x7F6E;&#x4FE1;&#x606F;&#x7684;&#x7248;&#x672C;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">auto</span> pos = fmt_spec.find_first_of(<span class="string">&quot;{}&quot;</span>, idx);</div></pre></td></tr></table></figure>
+<p>&#x5F53;&#x7136;&#x5199;&#x5165;&#x524D;&#x7F00;&#x7684;&#x540E;&#x7F00;&#x5904;&#x7406;&#x7684;&#x65F6;&#x5019;&#x4E5F;&#x8981;&#x76F8;&#x5E94;&#x7684;&#x66F4;&#x6539;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">builder.write(fmt_spec.data() + idx, pos - idx);</div><div class="line">BuildFormatString(builder, fmt_spec, pos + <span class="number">2</span>, args...);</div></pre></td></tr></table></figure>
+<p>&#x901A;&#x8FC7;&#x4E0A;&#x9762;&#x7684;&#x8FD9;&#x4E9B;&#x66F4;&#x6539;&#xFF0C;&#x6027;&#x80FD;&#x5F97;&#x5230;&#x4E86;&#x4E00;&#x5B9A;&#x7684;&#x63D0;&#x5347;&#xFF0C;&#x5BF9;&#x4E8E;&#x4E0B;&#x9762;&#x7684;&#x6D4B;&#x8BD5;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> kOutLoopCount = <span class="number">1000</span>;</div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> kInnerLoopCount = <span class="number">1000000</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></div><div class="line">{</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;&quot;</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;world&quot;</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world!&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world! PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; FormatString(<span class="string">&quot;{} world! PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>) &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"></div><div class="line">    <span class="keyword">long</span> sum = <span class="number">0</span>;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; kOutLoopCount; ++i) {</div><div class="line">        <span class="keyword">auto</span> beg = high_resolution_clock::now();</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; kOutLoopCount; ++i) {</div><div class="line">            FormatString(<span class="string">&quot;{} world! PI is {}&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="number">3.14</span>);</div><div class="line">        }</div><div class="line">        <span class="keyword">auto</span> end = high_resolution_clock::now();</div><div class="line">        sum += (end-beg).count();</div><div class="line">    }</div><div class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;average: &quot;</span> &lt;&lt; sum / kOutLoopCount &lt;&lt; <span class="built_in">endl</span>;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x6CA1;&#x6709;&#x4F18;&#x5316;&#x8FC7;&#x7684;&#x7248;&#x672C;&#xFF0C;&#x5E73;&#x5747;&#x5B9E;&#x8DF5;&#x5927;&#x6982;&#x662F; <code>1294218</code> &#x4F18;&#x5316;&#x8FC7;&#x7684;&#x7248;&#x672C;&#x7684;&#x5E73;&#x5747;&#x65F6;&#x95F4;&#x5927;&#x6982;&#x662F;
+<code>1068972</code>&#xFF0C;&#x6548;&#x679C;&#x8FD8;&#x662F;&#x4E0D;&#x9519;&#x7684;&#x3002;</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><code>std::string</code> &#x5728;&#x5B9E;&#x73B0;&#x7684;&#x65F6;&#x5019;&#x6CA1;&#x6709;&#x8003;&#x8651;&#x8FC7;&#x591A;&#x6001;&#x7684;&#x4F7F;&#x7528;&#xFF0C;&#x6BD4;&#x5982;&#x5B83;&#x6CA1;&#x6709;&#x58F0;&#x660E;&#x865A;&#x62DF;&#x6790;&#x6784;&#x51FD;
+&#x6570;&#xFF0C;&#x6240;&#x4EE5;&#x4E0D;&#x5EFA;&#x8BAE;&#x7EE7;&#x627F;&#x81EA; <code>std::string</code> &#x6269;&#x5C55;&#x81EA;&#x5DF1;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#xFF0C;&#x4F60;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;&#x7EC4;&#x5408;&#x66FF;&#x4EE3;&#x7EE7;&#x627F;&#x6765;
+&#x6269;&#x5C55;&#x6807;&#x51C6;&#x5E93;&#x4E2D;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#xFF0C;&#x4F46;&#x662F;&#x4F7F;&#x7528;&#x5168;&#x5C40;&#x51FD;&#x6570;&#x7684;&#x65B9;&#x5F0F;&#x66F4;&#x7B80;&#x5355;&#x65B9;&#x4FBF;&#xFF0C;&#x6240;&#x4EE5;&#x8FD9;&#x91CC;&#x91C7;&#x7528;&#x8FD9;&#x79CD;&#x65B9;&#x5F0F;&#x3002; <a href="#fnref1" class="footnote-backref">&#x21A9;</a></p>
+</li>
+</ol>
+</section>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/09/cppx-list-initilization/" rel="next" title="关于 C++ 11 初始化列表和转换构造函数">
+                <i class="fa fa-chevron-left"></i> 关于 C++ 11 初始化列表和转换构造函数
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/13/cpp-aggregate-initlization/" rel="prev" title="C++中的聚合初始化">
+                C++中的聚合初始化 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ju-ti-shi-xian"><span class="nav-number">1.</span> <span class="nav-text">具体实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ce-shi-jie-guo"><span class="nav-number">2.</span> <span class="nav-text">测试结果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#you-hua"><span class="nav-number">3.</span> <span class="nav-text">优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#shi-yong-ostringstream-ti-dai-stringstrem"><span class="nav-number">3.1.</span> <span class="nav-text">使用 ostringstream 替代 stringstrem</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#find-first-of-fan-hui-zhi-xiu-zheng"><span class="nav-number">3.2.</span> <span class="nav-text">find_first_of 返回值修正</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shi-yong-ostringstream-write-qu-diao-qian-zhui-zi-chuan-de-chuang-jian"><span class="nav-number">3.3.</span> <span class="nav-text">使用 ostringstream::write 去掉前缀子串的创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shi-yong-wei-zhi-xia-biao-qu-diao-hou-zhui-zi-chuan-de-chuang-jian"><span class="nav-number">3.4.</span> <span class="nav-text">使用位置下标去掉后缀子串的创建</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

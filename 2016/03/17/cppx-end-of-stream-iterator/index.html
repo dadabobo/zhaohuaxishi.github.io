@@ -1,0 +1,627 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="stream iterator &amp;#x662F;&amp;#x4E00;&amp;#x79CD;&amp;#x795E;&amp;#x5947;&amp;#x7684;&amp;#x8FED;&amp;#x4EE3;&amp;#x5668;&amp;#x9002;&amp;#x914D;&amp;#x5668;&amp;#xFF0C;&amp;#x5B83;&amp;#x8BA9;&amp;#x6211;&amp;#x4EEC;&amp;#x53EF;&amp;#x4EE5;&amp;#x4F7F;&amp;#x7528; STL &amp;#x7B97;&amp;#x">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 中使用 {} 作为串流迭代器 EOF">
+<meta property="og:url" content="http://blog.guorongfei.com/2016/03/17/cppx-end-of-stream-iterator/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="stream iterator &amp;#x662F;&amp;#x4E00;&amp;#x79CD;&amp;#x795E;&amp;#x5947;&amp;#x7684;&amp;#x8FED;&amp;#x4EE3;&amp;#x5668;&amp;#x9002;&amp;#x914D;&amp;#x5668;&amp;#xFF0C;&amp;#x5B83;&amp;#x8BA9;&amp;#x6211;&amp;#x4EEC;&amp;#x53EF;&amp;#x4EE5;&amp;#x4F7F;&amp;#x7528; STL &amp;#x7B97;&amp;#x">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++11 中使用 {} 作为串流迭代器 EOF">
+<meta name="twitter:description" content="stream iterator &amp;#x662F;&amp;#x4E00;&amp;#x79CD;&amp;#x795E;&amp;#x5947;&amp;#x7684;&amp;#x8FED;&amp;#x4EE3;&amp;#x5668;&amp;#x9002;&amp;#x914D;&amp;#x5668;&amp;#xFF0C;&amp;#x5B83;&amp;#x8BA9;&amp;#x6211;&amp;#x4EEC;&amp;#x53EF;&amp;#x4EE5;&amp;#x4F7F;&amp;#x7528; STL &amp;#x7B97;&amp;#x">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2016/03/17/cppx-end-of-stream-iterator/"/>
+
+
+
+
+
+  <title> C++11 中使用 {} 作为串流迭代器 EOF | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2016/03/17/cppx-end-of-stream-iterator/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                C++11 中使用 {} 作为串流迭代器 EOF
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-03-17T09:53:36+08:00">
+                2016-03-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><code>stream iterator</code> &#x662F;&#x4E00;&#x79CD;&#x795E;&#x5947;&#x7684;&#x8FED;&#x4EE3;&#x5668;&#x9002;&#x914D;&#x5668;&#xFF0C;&#x5B83;&#x8BA9;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>STL</code> &#x7B97;&#x6CD5;&#x64CD;&#x7EB5;&#x8F93;
+&#x5165;&#x8F93;&#x51FA;&#x6D41;&#xFF0C;&#x6BD4;&#x5982;&#x628A; <code>vector</code> &#x4E2D;&#x7684;&#x5185;&#x5BB9;&#x5168;&#x90E8;&#x8F93;&#x51FA;&#xFF0C;&#x53EF;&#x4EE5;&#x7B80;&#x5355;&#x7684;&#x5199;&#x6210;&#x8FD9;&#x6837;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; coll = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>};</div><div class="line">copy(coll.cbegin(), coll.cend(), ostream_iterator&lt;<span class="keyword">int</span>&gt;(<span class="built_in">cout</span>, <span class="string">&quot; &quot;</span>));</div></pre></td></tr></table></figure>
+<p>&#x5F53;&#x7136;&#x4F60;&#x4E5F;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;&#x8FD9;&#x79CD;&#x65B9;&#x5F0F;&#x5904;&#x7406;&#x8F93;&#x5165;&#xFF0C;&#x6BD4;&#x5982;&#x4ECE;&#x6807;&#x51C6;&#x8F93;&#x5165;&#x4E2D;&#x8F93;&#x5165;&#x5143;&#x7D20;&#x5230; <code>vector</code> &#x4E2D;&#x53BB;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; coll;</div><div class="line">copy(istream_iterator&lt;<span class="keyword">int</span>&gt;(<span class="built_in">cin</span>),    <span class="comment">// start of source</span></div><div class="line">     istream_iterator&lt;<span class="keyword">int</span>&gt;(),       <span class="comment">// end of source</span></div><div class="line">     back_inserter(coll));          <span class="comment">// destination</span></div></pre></td></tr></table></figure>
+<p><code>istream_iterator</code> &#x8981;&#x6BD4; <code>ostream_iterator</code> &#x96BE;&#x7528;&#x4E00;&#x4E9B;&#xFF0C;&#x56E0;&#x4E3A;&#x4F60;&#x5FC5;&#x987B;&#x8981;&#x4F7F;&#x7528;&#x4E00;&#x4E2A;
+<code>EOF</code> &#x8868;&#x793A;&#x8F93;&#x5165;&#x7684;&#x7ED3;&#x675F;&#xFF0C;&#x8FD9;&#x4E2A;&#x6982;&#x5FF5;&#x53EF;&#x4EE5;&#x7528; <code>istream_iterator</code> &#x7684;&#x9ED8;&#x8BA4;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4EA7;&#x751F;&#x7684;&#x5BF9;
+&#x8C61;&#x8868;&#x793A;&#x3002;&#x4E5F;&#x5C31;&#x662F;&#x4E0A;&#x9762;&#x8FD9;&#x4E2A; <code>istream_iterator&lt;int&gt;()</code>&#x3002;</p>
+<p>&#x8FD9;&#x79CD;&#x8BED;&#x6CD5;&#x770B;&#x8D77;&#x6765;&#x6BD4;&#x8F83;&#x8BE1;&#x5F02;&#xFF0C;&#x6211;&#x5728;&#x770B; &#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>&#x8FD9;&#x672C;&#x4E66;&#x7684;&#x52D8;&#x8BEF;&#x7684;&#x65F6;&#x5019;&#x53D1;&#x73B0;&#x4E86;&#x4E00;&#x79CD;&#x65B0;
+&#x7684;&#x8BED;&#x6CD5;&#xFF0C;&#x76F4;&#x63A5;&#x4F7F;&#x7528;<code>{}</code>&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">copy (istream_iterator&lt;<span class="built_in">string</span>&gt;(<span class="built_in">cin</span>), <span class="comment">// start of source</span></div><div class="line">      {},                            <span class="comment">// end of source</span></div><div class="line">                                     <span class="comment">//(default constructed istream iterator)</span></div><div class="line">      back_inserter(coll));          <span class="comment">// destination</span></div></pre></td></tr></table></figure>
+<p>&#x4E4B;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x8FD9;&#x6837;&#x505A;&#x4E3B;&#x8981;&#x5F52;&#x529F;&#x4E8E; <code>C++11</code> &#x7EDF;&#x4E00;&#x4E86;&#x521D;&#x59CB;&#x5316;&#x8BED;&#x6CD5;&#xFF0C;&#x53EF;&#x4EE5;&#x5728;&#x4EFB;&#x4F55;&#x5730;&#x65B9;&#x4F7F;&#x7528; <code>{}</code>
+&#x6765;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x5728; <code>copy</code> &#x4E2D;&#xFF0C;&#x56E0;&#x4E3A;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x6839;&#x636E;&#x7B2C;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#x63A8;&#x5BFC;&#x51FA;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x7684;&#x7C7B;&#x578B;&#xFF0C;&#x6240;&#x4EE5;
+&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x901A;&#x8FC7; <code>{}</code> &#x6765;&#x8C03;&#x7528;&#x9ED8;&#x8BA4;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x521B;&#x5EFA;&#x4EE3;&#x8868; <code>EOF</code> &#x7684;&#x8FED;&#x4EE3;&#x5668;&#x3002;</p>
+<p><a href="http://www.cppstdlib.com/errata.html" target="_blank" rel="external">&#x52D8;&#x8BEF;</a>&#x7684;&#x539F;&#x8BDD;&#x5982;&#x4E0B;&#xFF1A;</p>
+<blockquote>
+<p>Note that since C++11, you can pass empty curly braces instead of a default
+constructed stream iterator as the end of the range. This works because the
+type of the argument that defines the end of the range is deduced from the
+previous argument that defines the begin of the range:</p>
+</blockquote>
+<p>&#x53E6;&#x5916;&#x9700;&#x8981;&#x63D0;&#x9192;&#x7684;&#x662F;&#xFF0C;&#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;&#x7684;&#x4E2D;&#x6587;&#x8BD1;&#x672C;&#x5E94;&#x8BE5;&#x662F;&#x57FA;&#x4E8E;&#x7B2C;&#x4E00;&#x6B21;&#x5370;&#x5237;&#x7248;&#x672C;&#x7FFB;&#x8BD1;&#x7684;&#xFF0C;&#x539F;&#x4E66;
+&#x6709;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#xFF0C;&#x5728;&#x82F1;&#x6587;&#x7248;&#x7684;<a href="http://www.cppstdlib.com/errata.html" target="_blank" rel="external">&#x52D8;&#x8BEF;</a>&#x4E2D;&#x6709;&#x4FEE;&#x6B63;&#xFF0C;&#x5927;&#x5BB6;&#x5982;&#x679C;&#x8BFB;&#x8FD9;&#x672C;&#x4E66;&#x5E94;&#x8BE5;&#x5173;&#x6CE8;&#x4E00;&#x4E9B;&#x5B83;&#x7684;
+&#x52D8;&#x8BEF;&#xFF0C;&#x4EE5;&#x514D;&#x88AB;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#x6240;&#x8BEF;&#x5BFC;&#x3002;</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>&#x6211;&#x8BFB;&#x7684;&#x662F;&#x7B2C;&#x4E8C;&#x7248;&#xFF0C;&#x5305;&#x542B;&#x6700;&#x65B0;&#x7684;<code>C++11</code>&#x6807;&#x51C6;&#x5E93;&#x5185;&#x5BB9; <a href="#fnref1" class="footnote-backref">&#x21A9;</a></p>
+</li>
+</ol>
+</section>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/16/cppx-stdlib-empalce/" rel="next" title="C++11 中的 emplace">
+                <i class="fa fa-chevron-left"></i> C++11 中的 emplace
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/26/cppx-stdlib-note/" rel="prev" title="读书札记之 —— 《C++ 标准库（第二版）》">
+                读书札记之 —— 《C++ 标准库（第二版）》 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

@@ -1,0 +1,1192 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="netlink,libnl," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="6. 属性
+如果可能的话，无论什么时候你都应该把 netlink 消息的有效载荷编码成 netlink 属
+性。使用属性可以使得日后对任何 netlink 协议进行扩展的时候都不会破坏它的二进制
+兼容性。比如：假设你的设备现在可能使用一个 32 位的计数器来统计数据，但是几年后设
+备改成维护一个 64 位的计数器来记录更快的网络硬件。如果你的协议使用了属性，那么过
+度到 64 位计数器是一个非常简">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netlink 库 -- 官方开发者教程中文版第六部分">
+<meta property="og:url" content="http://blog.guorongfei.com/2015/02/12/libnl-translation-part6/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="6. 属性
+如果可能的话，无论什么时候你都应该把 netlink 消息的有效载荷编码成 netlink 属
+性。使用属性可以使得日后对任何 netlink 协议进行扩展的时候都不会破坏它的二进制
+兼容性。比如：假设你的设备现在可能使用一个 32 位的计数器来统计数据，但是几年后设
+备改成维护一个 64 位的计数器来记录更快的网络硬件。如果你的协议使用了属性，那么过
+度到 64 位计数器是一个非常简">
+<meta property="og:image" content="http://www.infradead.org/~tgr/libnl/doc/images//attribute_hdr.png">
+<meta property="og:updated_time" content="2016-12-02T06:07:19.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netlink 库 -- 官方开发者教程中文版第六部分">
+<meta name="twitter:description" content="6. 属性
+如果可能的话，无论什么时候你都应该把 netlink 消息的有效载荷编码成 netlink 属
+性。使用属性可以使得日后对任何 netlink 协议进行扩展的时候都不会破坏它的二进制
+兼容性。比如：假设你的设备现在可能使用一个 32 位的计数器来统计数据，但是几年后设
+备改成维护一个 64 位的计数器来记录更快的网络硬件。如果你的协议使用了属性，那么过
+度到 64 位计数器是一个非常简">
+<meta name="twitter:image" content="http://www.infradead.org/~tgr/libnl/doc/images//attribute_hdr.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2015/02/12/libnl-translation-part6/"/>
+
+
+
+
+
+  <title> Netlink 库 -- 官方开发者教程中文版第六部分 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/02/12/libnl-translation-part6/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Netlink 库 -- 官方开发者教程中文版第六部分
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-02-12T00:00:00+08:00">
+                2015-02-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="6-shu-xing">6. &#x5C5E;&#x6027;</h1>
+<p>&#x5982;&#x679C;&#x53EF;&#x80FD;&#x7684;&#x8BDD;&#xFF0C;&#x65E0;&#x8BBA;&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x4F60;&#x90FD;&#x5E94;&#x8BE5;&#x628A; <code>netlink</code> &#x6D88;&#x606F;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x7F16;&#x7801;&#x6210; <code>netlink</code> &#x5C5E;
+&#x6027;&#x3002;&#x4F7F;&#x7528;&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x4F7F;&#x5F97;&#x65E5;&#x540E;&#x5BF9;&#x4EFB;&#x4F55; <code>netlink</code> &#x534F;&#x8BAE;&#x8FDB;&#x884C;&#x6269;&#x5C55;&#x7684;&#x65F6;&#x5019;&#x90FD;&#x4E0D;&#x4F1A;&#x7834;&#x574F;&#x5B83;&#x7684;&#x4E8C;&#x8FDB;&#x5236;
+&#x517C;&#x5BB9;&#x6027;&#x3002;&#x6BD4;&#x5982;&#xFF1A;&#x5047;&#x8BBE;&#x4F60;&#x7684;&#x8BBE;&#x5907;&#x73B0;&#x5728;&#x53EF;&#x80FD;&#x4F7F;&#x7528;&#x4E00;&#x4E2A; 32 &#x4F4D;&#x7684;&#x8BA1;&#x6570;&#x5668;&#x6765;&#x7EDF;&#x8BA1;&#x6570;&#x636E;&#xFF0C;&#x4F46;&#x662F;&#x51E0;&#x5E74;&#x540E;&#x8BBE;
+&#x5907;&#x6539;&#x6210;&#x7EF4;&#x62A4;&#x4E00;&#x4E2A; 64 &#x4F4D;&#x7684;&#x8BA1;&#x6570;&#x5668;&#x6765;&#x8BB0;&#x5F55;&#x66F4;&#x5FEB;&#x7684;&#x7F51;&#x7EDC;&#x786C;&#x4EF6;&#x3002;&#x5982;&#x679C;&#x4F60;&#x7684;&#x534F;&#x8BAE;&#x4F7F;&#x7528;&#x4E86;&#x5C5E;&#x6027;&#xFF0C;&#x90A3;&#x4E48;&#x8FC7;
+&#x5EA6;&#x5230; 64 &#x4F4D;&#x8BA1;&#x6570;&#x5668;&#x662F;&#x4E00;&#x4E2A;&#x975E;&#x5E38;&#x7B80;&#x5355;&#x7684;&#x4E8B;&#x60C5;&#xFF0C;&#x4F60;&#x53EA;&#x662F;&#x9700;&#x8981;&#x53D1;&#x9001;&#x4E00;&#x4E2A;&#x65B0;&#x7684;&#x5C5E;&#x6027;&#x6765;&#x5305;&#x542B;&#x8FD9;&#x4E2A; 64 &#x4F4D;
+&#x7684;&#x53D8;&#x91CF;&#xFF0C;&#x4E0E;&#x6B64;&#x540C;&#x65F6;&#x4ECD;&#x7136;&#x63D0;&#x4F9B;&#x65E7;&#x7684; 32 &#x4F4D;&#x7684;&#x8BA1;&#x6570;&#x5668;&#x3002;&#x5982;&#x679C;&#x4F60;&#x7684;&#x534F;&#x8BAE;&#x6CA1;&#x6709;&#x4F7F;&#x7528;&#x5C5E;&#x6027;&#x7684;&#x8BDD;&#xFF0C;&#x4F60;&#x5C06;&#x65E0;
+&#x6CD5;&#x5728;&#x4E0D;&#x7978;&#x53CA;&#x5DF2;&#x6709;&#x7684;&#x534F;&#x8BAE;&#x4F7F;&#x7528;&#x8005;&#x7684;&#x524D;&#x63D0;&#x4E0B;&#x8F6C;&#x5316;&#x8FD9;&#x4E2A;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x3002;</p>
+<p>&#x5C5E;&#x6027;&#x5D4C;&#x5957;&#x7684;&#x6982;&#x5FF5;&#x4E5F;&#x5141;&#x8BB8;&#x4F60;&#x7684;&#x534F;&#x8BAE;&#x7684;&#x5B50;&#x7CFB;&#x7EDF;&#x5B9E;&#x73B0;&#x548C;&#x7EF4;&#x62A4;&#x81EA;&#x5DF1;&#x7684;&#x5C5E;&#x6027;&#x6A21;&#x5F0F;&#x3002;&#x5047;&#x5982;&#x73B0;&#x5728;&#x5F15;&#x5165;&#x4E86;&#x65B0;&#x4E00;
+&#x4EE3;&#x7684;&#x7F51;&#x7EDC;&#x8BBE;&#x5907;&#xFF0C;&#x800C;&#x5B83;&#x9700;&#x8981;&#x8BBE;&#x7F6E;&#x4E00;&#x7CFB;&#x5217;&#x7684;&#x534F;&#x8BAE;&#x8BBE;&#x8BA1;&#x4E4B;&#x521D;&#x6CA1;&#x6709;&#x8003;&#x8651;&#x5230;&#x7684;&#x65B0;&#x7684;&#x914D;&#x7F6E;&#x9009;&#x9879;&#x3002;&#x901A;&#x8FC7;&#x4F7F;&#x7528;
+&#x5C5E;&#x6027;&#xFF0C;&#x65B0;&#x4E00;&#x4EE3;&#x7684;&#x8BBE;&#x5907;&#x53EF;&#x4EE5;&#x5B9A;&#x4E49;&#x4E00;&#x4E2A;&#x65B0;&#x7684;&#x5C5E;&#x6027;&#x7136;&#x540E;&#x7528;&#x81EA;&#x5DF1;&#x7684;&#x5B50;&#x5C5E;&#x6027;&#x7ED3;&#x6784;&#x6765;&#x586B;&#x5145;&#x8FD9;&#x4E2A;&#x5C5E;&#x6027;&#xFF0C;&#x8FD9;&#x4E9B;
+&#x5B50;&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x6269;&#x5C55;&#x751A;&#x81F3;&#x662F;&#x5B8C;&#x5168;&#x5E9F;&#x5F03;&#x539F;&#x6765;&#x7684;&#x5C5E;&#x6027;&#x3002;</p>
+<p>&#x6240;&#x4EE5;&#xFF0C;&#x8BF7;<em>&#x59CB;&#x7EC8;</em>&#x4F7F;&#x7528;&#x5C5E;&#x6027;&#xFF0C;&#x5373;&#x4FBF;&#x662F;&#x5728;&#x4F60;&#x51E0;&#x4E4E;&#x53EF;&#x4EE5;&#x80AF;&#x5B9A;&#x4F60;&#x7684;&#x6D88;&#x606F;&#x683C;&#x5F0F;&#x6C38;&#x8FDC;&#x90FD;&#x4E0D;&#x4F1A;&#x6539;&#x53D8;&#x7684;&#x60C5;&#x51B5;&#x4E0B;
+&#x4E5F;&#x662F;&#x5982;&#x6B64;&#x3002;</p>
+<a id="more"></a>
+<p></p><h2 id="6-1-shu-xing-ge-shi">6.1 &#x5C5E;&#x6027;&#x683C;&#x5F0F;</h2><p></p>
+<p><code>netlink</code> &#x5C5E;&#x6027;&#x5141;&#x8BB8;&#x4F60;&#x5F80; <code>neltink</code> &#x6D88;&#x606F;&#x4E2D;&#x6DFB;&#x52A0;&#x4EFB;&#x610F;&#x6570;&#x91CF;&#x7684;&#x4EFB;&#x610F;&#x957F;&#x5EA6;&#x6570;&#x636E;&#x6BB5;&#x3002;&#x5173;&#x4E8E;&#x5C5E;&#x6027;&#x5728;
+&#x6D88;&#x606F;&#x4E2D;&#x7684;&#x5B58;&#x653E;&#x4F4D;&#x7F6E;&#x8BF7;&#x53C2;&#x8003; <a href="/netlink/2015/01/31/libnl-translation-part5.html#parse_msg_attr">&#x3010;core_msg_attr&#x3011;</a> &#x4E00;&#x8282;&#x3002;</p>
+<p><code>nlmsg_attrdata()</code> &#x51FD;&#x6570;&#x8FD4;&#x56DE;&#x7684;&#x5C5E;&#x6027;&#x6570;&#x636E;&#x7684;&#x683C;&#x5F0F;&#x5982;&#x4E0B;&#xFF1A;</p>
+<pre><code> &lt;----------- nla_total_size(payload) -----------&gt;
+ &lt;---------- nla_size(payload) -----------&gt;
++-----------------+- - -+- - - - - - - - - +- - -+-----------------+- - -
+|  struct nlattr  | Pad |     Payload      | Pad |  struct nlattr  |
++-----------------+- - -+- - - - - - - - - +- - -+-----------------+- - -
+ &lt;---- NLA_HDRLEN -----&gt; &lt;--- NLA_ALIGN(len) ---&gt; &lt;---- NLA_HDRLEN ---
+</code></pre>
+<p>&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x90FD;&#x5E94;&#x8BE5;&#x5728; <code>NLA_ALIGNTO</code> &#xFF08;4 &#x5B57;&#x8282;&#xFF09;&#x500D;&#x6570;&#x7684;&#x504F;&#x79FB;&#x91CF;&#x4E0A;&#x5F00;&#x59CB;&#x3002;&#x5982;&#x679C;&#x4F60;&#x60F3;&#x77E5;&#x9053;&#x5C5E;&#x6027;
+&#x7684;&#x672B;&#x5C3E;&#x662F;&#x5426;&#x9700;&#x8981;&#x8FDB;&#x884C;&#x586B;&#x5145;&#xFF0C;&#x4F60;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>nla_padlen()</code> &#x51FD;&#x6570;&#xFF0C;&#x5B83;&#x8FD4;&#x56DE;&#x9700;&#x8981;&#x6DFB;&#x52A0;&#x7684;&#x586B;&#x5145;&#x7684;&#x5B57;
+&#x8282;&#x6570;&#x3002;</p>
+<p><img src="http://www.infradead.org/~tgr/libnl/doc/images//attribute_hdr.png" alt="&#x5C5E;&#x6027;&#x683C;&#x5F0F;"></p>
+<p>&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x90FD;&#x662F;&#x548C;&#x4E00;&#x4E2A;&#x7C7B;&#x578B;&#x53CA;&#x957F;&#x5EA6;&#x5B57;&#x6BB5;&#x4E00;&#x8D77;&#x7F16;&#x7801;&#xFF0C;&#x8FD9;&#x4E24;&#x4E2A;&#x5B57;&#x8282;&#x90FD;&#x662F; 16 &#x4E2A;&#x5B57;&#x8282;&#xFF0C;&#x5B83;&#x4EEC;&#x5B58;&#x50A8;&#x5728;
+&#x5C5E;&#x6027;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x524D;&#x9762;&#x7684;&#x5C5E;&#x6027;&#x5934;&#x90E8;&#x4E2D;&#xFF08;struct nlattr&#xFF09;&#x3002;&#x5C5E;&#x6027;&#x7684;&#x957F;&#x5EA6;&#x662F;&#x7528;&#x6765;&#x8BA1;&#x7B97;&#x4E0B;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;
+&#x7684;&#x504F;&#x79FB;&#x91CF;&#x7684;&#x3002;</p>
+<p></p><h2 id="6-2-shu-xing-jie-xi">6.2 &#x5C5E;&#x6027;&#x89E3;&#x6790;</h2><p></p>
+<p></p><h3 id="ba-shu-xing-liu-fen-ge-cheng-shu-xing-ji">&#x628A;&#x5C5E;&#x6027;&#x6D41;&#x5206;&#x5272;&#x6210;&#x5C5E;&#x6027;&#x96C6;</h3><p></p>
+<p>&#x5E93;&#x4E2D;&#x5B58;&#x5728;&#x4E00;&#x4E2A;&#x624B;&#x52A8;&#x5206;&#x5272;&#x5C5E;&#x6027;&#x6D41;&#x7684;&#x63A5;&#x53E3;&#xFF0C;&#x867D;&#x7136;&#x5927;&#x90E8;&#x5206;&#x7684;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x90FD;&#x4F1A;&#x4F7F;&#x7528; <code>nlmsg_parse()</code>
+&#x5BB6;&#x65CF;&#x7684;&#x51FD;&#x6570;&#x4E4B;&#x4E00;&#xFF08;&#x53C2;&#x8003; <a href="#core_attr_parse_easy">core_attr_parse_easy</a>&#xFF09;&#x6765;&#x5B8C;&#x6210;&#x8FD9;&#x9879;&#x5DE5;&#x4F5C;&#x3002;</p>
+<p>&#x5728;<a href="#attr_formate">&#x3010;&#x5C5E;&#x6027;&#x683C;&#x5F0F;&#x3011;</a> &#x4E00;&#x8282;&#x4E2D;&#x63D0;&#x5230;&#xFF0C;&#x5C5E;&#x6027;&#x6BB5;&#x4E2D;&#x5305;&#x542B;&#x4E86;&#x4E0D;&#x5B9A;&#x6570;&#x91CF;&#x7684;&#x5C5E;&#x6027;&#x5E8F;&#x5217;&#x3002;
+<code>nlmsg_attrdata()</code> &#x51FD;&#x6570;&#x8FD4;&#x56DE;&#x7684;&#x6307;&#x9488;&#x6307;&#x5411;&#x7B2C;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x5934;&#x90E8;&#x3002;&#x4EFB;&#x4F55;&#x540E;&#x7EED;&#x7684;&#x5C5E;&#x6027;&#x90FD;&#x53EF;&#x4EE5;&#x901A;&#x8FC7;
+&#x5728;&#x524D;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x5934;&#x90E8;&#x4E0A;&#x8C03;&#x7528; <code>nla_next()</code> &#x6765;&#x83B7;&#x5F97;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">struct</span> nlattr *<span class="title">nla_next</span><span class="params">(<span class="keyword">const</span> <span class="keyword">struct</span> nlattr *attr, <span class="keyword">int</span> *remaining)</span></span>;</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x7684;&#x4F7F;&#x7528;&#x573A;&#x666F;&#x548C; <code>nlmsg_next()</code> &#x51FD;&#x6570;&#x662F;&#x4E00;&#x6837;&#x7684;&#xFF0C;&#x6240;&#x4EE5; <code>nla_next()</code> &#x51FD;&#x6570;&#x4E5F;&#x4F1A;&#x4ECE;&#x5C5E;
+&#x6027;&#x6D41;&#x7684;&#x5269;&#x4F59;&#x5B57;&#x8282;&#x6570;&#x4E2D;&#x51CF;&#x53BB;&#x524D;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x5927;&#x5C0F;&#x3002;</p>
+<p>&#x548C;&#x6D88;&#x606F;&#x4E00;&#x6837;&#xFF0C;&#x5C5E;&#x6027;&#x4E2D;&#x5E76;&#x6CA1;&#x6709;&#x5305;&#x542B;&#x63A5;&#x4E0B;&#x6765;&#x662F;&#x5426;&#x8FD8;&#x6709;&#x5176;&#x4ED6;&#x5C5E;&#x6027;&#x7684;&#x6307;&#x793A;&#x5668;&#x3002;&#x552F;&#x4E00;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x5224;&#x522B;&#x7684;&#x662F;
+&#x5C5E;&#x6027;&#x6D41;&#x7684;&#x5269;&#x4F59;&#x5B57;&#x8282;&#x6570;&#x3002;<code>nla_ok()</code> &#x51FD;&#x6570;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x5224;&#x65AD;&#x5269;&#x4F59;&#x5B57;&#x8282;&#x6570;&#x4E2D;&#x662F;&#x5426;&#x8FD8;&#x5B58;&#x5728;&#x5176;&#x4ED6;&#x7684;&#x5C5E;&#x6027;
+&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">nla_ok</span><span class="params">(<span class="keyword">const</span> <span class="keyword">struct</span> nlattr *attr, <span class="keyword">int</span> remaining)</span></span>;</div></pre></td></tr></table></figure>
+<p><code>nla_ok()</code> &#x548C; <code>nla_next()</code> &#x51FD;&#x6570;&#x7684;&#x60EF;&#x5E38;&#x7528;&#x6CD5;&#x5982;&#x4E0B;&#xFF1A;</p>
+<p><strong>nla_ok()/nla_next()&#x7528;&#x6CD5;</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/msg.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">struct</span> nlattr *hdr = nlmsg_attrdata(msg, <span class="number">0</span>);</div><div class="line"><span class="keyword">int</span> remaining = nlmsg_attlen(msg, <span class="number">0</span>);</div><div class="line"></div><div class="line"><span class="keyword">while</span>(nla_ok(hdr, remaining)) {</div><div class="line">	<span class="comment">/* &#x5728;&#x6B64;&#x89E3;&#x6790;&#x5C5E;&#x6027; */</span></div><div class="line"></div><div class="line">	hdr = nla_next(hdr, &amp;remaining);</div><div class="line">}</div></pre></td></tr></table></figure>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;</strong><code>nla_ok()</code> &#x53EA;&#x6709;&#x5728;&#x5269;&#x4F59;&#x5B57;&#x8282;&#x6570;&#x4E2D;&#x5305;&#x542B;&#x5305;&#x62EC;&#x5C5E;&#x6027;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x5728;&#x5185;&#x7684;&#x5B8C;&#x6574;&#x5C5E;&#x6027;&#x7684;&#x65F6;&#x5019;
+&#x624D;&#x4F1A;&#x8FD4;&#x56DE; <code>true</code></p>
+<p></p><h3 id="fang-wen-shu-xing-de-tou-bu-he-shu-xing-de-you-xiao-zai-he">&#x8BBF;&#x95EE;&#x5C5E;&#x6027;&#x7684;&#x5934;&#x90E8;&#x548C;&#x5C5E;&#x6027;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;</h3><p></p>
+<p>&#x65E0;&#x8BBA;&#x662F;&#x4F7F;&#x7528;&#x5206;&#x5272;&#x5C5E;&#x6027;&#x6D41;&#x7684;&#x65B9;&#x5F0F;&#x8FD8;&#x662F;&#x8FD8;&#x662F;&#x4F7F;&#x7528;&#x5176;&#x4ED6;&#x63A5;&#x53E3;&#xFF0C;&#x53EA;&#x8981;&#x627E;&#x51FA;&#x6765;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x4F60;&#x5C31;&#x53EF;&#x4EE5;&#x8BBF;&#x95EE;&#x5B83;
+&#x7684;&#x8F7D;&#x8377;&#x548C;&#x5934;&#x90E8;&#x3002;</p>
+<pre><code>			     &lt;- nla_len(hdr) -&gt;
+    +-----------------+- - -+- - - - - - - - - +- - -+
+    |  struct nlattr  | Pad |     Payload      | Pad |
+    +-----------------+- - -+- - - - - - - - - +- - -+
+nla_data(hdr) ---------------^
+</code></pre>
+<p><code>nla_len()</code> &#x51FD;&#x6570;&#x548C; <code>nla_type()</code> &#x51FD;&#x6570;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x8BBF;&#x95EE;&#x5C5E;&#x6027;&#x7684;&#x5934;&#x90E8;&#x3002;<code>nla_len()</code> &#x4F1A;&#x8FD4;&#x56DE;&#x4E0D;
+&#x5305;&#x62EC;&#x586B;&#x5145;&#x5B57;&#x8282;&#x5728;&#x5185;&#x7684;&#x8F7D;&#x8377;&#x7684;&#x957F;&#x5EA6;&#x3002;<code>nla_type()</code> &#x51FD;&#x6570;&#x5219;&#x4F1A;&#x8FD4;&#x56DE;&#x5C5E;&#x6027;&#x7684;&#x7C7B;&#x578B;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">nla_len</span><span class="params">(<span class="keyword">const</span> <span class="keyword">struct</span> nlattr *hdr)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">nla_type</span><span class="params">(<span class="keyword">const</span> <span class="keyword">struct</span> nlattr *hdr)</span></span>;</div></pre></td></tr></table></figure>
+<p><code>nla_data()</code> &#x51FD;&#x6570;&#x4F1A;&#x8FD4;&#x56DE;&#x6307;&#x5411;&#x5C5E;&#x6027;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x7684;&#x6307;&#x9488;&#x3002;&#x9700;&#x8981;&#x6CE8;&#x610F;&#x7684;&#x662F;&#x56E0;&#x4E3A; <code>NLA_ALIGENTO</code>
+&#x662F; 4 &#x4E2A;&#x5B57;&#x8282;&#x6240;&#x4EE5;&#x76F4;&#x63A5;&#x8F6C;&#x578B;&#x6216;&#x89E3;&#x5F15;&#x7528;&#x4EFB;&#x4F55;&#x5927;&#x4E8E; 32 &#x4F4D;&#x7684;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x7684;&#x6307;&#x9488;&#x90FD;&#x662F;&#x4E0D;&#x5B89;&#x5168;&#x7684;&#x505A;&#x6CD5;&#xFF0C;
+&#x8FD9;&#x4F9D;&#x8D56;&#x4E8E;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x6240;&#x8FD0;&#x884C;&#x7684;&#x5E73;&#x53F0;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> *<span class="title">nla_data</span><span class="params">(<span class="keyword">struct</span> nlattr *hdr)</span></span>;</div></pre></td></tr></table></figure>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;</strong> &#x5343;&#x4E07;&#x4E0D;&#x8981;&#x65AD;&#x5B9A;&#x8F7D;&#x8377;&#x7684;&#x5927;&#x5C0F;&#x662F;&#x4F60;&#x671F;&#x671B;&#x7684;&#x5927;&#x5C0F;&#xFF0C;<em>&#x52A1;&#x5FC5;</em>&#x81EA;&#x5DF1;&#x68C0;&#x67E5;&#x8F7D;&#x8377;&#x7684;&#x957F;&#x5EA6;&#x7684;&#x6765;&#x786E;
+&#x8BA4;&#x5B83;&#x6EE1;&#x8DB3;&#x4F60;&#x7684;&#x8981;&#x6C42;</p>
+<p></p><h3 id="shu-xing-jian-yan">&#x5C5E;&#x6027;&#x68C0;&#x9A8C;</h3><p></p>
+<p>&#x5F53;&#x63A5;&#x6536;&#x5230;&#x4E00;&#x4E2A; <code>netlink</code> &#x5C5E;&#x6027;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x63A5;&#x6536;&#x8005;&#x5BF9;&#x5C5E;&#x6027;&#x5E94;&#x8BE5;&#x662F;&#x4EC0;&#x4E48;&#x6837;&#x5B50;&#x6709;&#x81EA;&#x5DF1;&#x7684;&#x671F;&#x671B;&#x3002;&#x8FD9;&#x79CD;
+&#x671F;&#x671B;&#x5FC5;&#x987B;&#x88AB;&#x5B9A;&#x4E49;&#x51FA;&#x6765;&#x4EE5;&#x4FDD;&#x8BC1;&#x53D1;&#x9001;&#x65B9;&#x6EE1;&#x8DB3;&#x6211;&#x4EEC;&#x7684;&#x671F;&#x671B;&#x3002;&#x51FA;&#x4E8E;&#x8FD9;&#x4E2A;&#x76EE;&#x7684;&#xFF0C;&#x5E93;&#x4E2D;&#x63D0;&#x4F9B;&#x4E86;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x9A8C;
+&#x8BC1;&#x7684;&#x63A5;&#x53E3;&#xFF0C;&#x5B83;&#x5FC5;&#x987B;&#x5728;&#x8BBF;&#x95EE;&#x4EFB;&#x4F55;&#x7684;&#x8F7D;&#x8377;&#x4E4B;&#x524D;&#x4F7F;&#x7528;&#x3002;</p>
+<p>&#x4EFB;&#x4F55;&#x63D0;&#x4F9B;&#x5C5E;&#x6027;&#x9A8C;&#x8BC1;&#x7684;&#x51FD;&#x6570;&#x90FD;&#x662F;&#x57FA;&#x4E8E; <code>struct nla_policy</code> &#x7ED3;&#x6784;&#x4F53;&#x7684;&#xFF1A;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> nla_policy {</div><div class="line">	<span class="keyword">uint16_t</span>	type;</div><div class="line">	<span class="keyword">uint16_t</span> 	minlen;</div><div class="line">	<span class="keyword">uint16_t</span> 	maxlen;</div><div class="line">};</div></pre></td></tr></table></figure>
+<p><code>type</code> &#x5B57;&#x6BB5;&#x6307;&#x5B9A;&#x4E86;&#x5C5E;&#x6027;&#x7684;&#x6570;&#x636E;&#x7C7B;&#x578B;&#xFF0C;&#x6BD4;&#x5982;&#xFF1A;<code>NLA_U32</code>&#x3001;<code>NLA_STRING</code>&#x3001;<code>NLA_FLAG</code>&#xFF0C;&#x5B83;&#x7684;
+&#x9ED8;&#x8BA4;&#x503C;&#x662F; <code>NLA_UNSPEC</code>&#x3002;<code>minlen</code> &#x5B57;&#x6BB5;&#x5B9A;&#x4E49;&#x4E86;&#x5408;&#x6CD5;&#x5C5E;&#x6027;&#x7684;&#x6700;&#x5C0F;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x3002;<code>minlen</code>
+&#x7684;&#x503C;&#x5BF9;&#x4E8E;&#x5927;&#x90E8;&#x5206;&#x8BF8;&#x5982;&#x6574;&#x578B;&#x3001;&#x6807;&#x5FD7;&#x8FD9;&#x7C7B;&#x7684;&#x57FA;&#x672C;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x6765;&#x8BF4;&#x90FD;&#x662F;&#x9690;&#x542B;&#x7684;&#x3002;<code>maxlen</code> &#x5B57;&#x6BB5;&#x5219;&#x5B9A;
+&#x4E49;&#x4E86;&#x5408;&#x6CD5;&#x5C5E;&#x6027;&#x7684;&#x6700;&#x5927;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x3002;</p>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;</strong> &#x5F53;&#x6211;&#x4EEC;&#x628A;&#x7ED3;&#x6784;&#x4F53;&#x7F16;&#x7801;&#x5230;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x4E2D;&#x53BB;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x6307;&#x5B9A;&#x6700;&#x5927;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x5E76;&#x975E;&#x660E;
+&#x667A;&#x4E4B;&#x4E3E;&#x56E0;&#x4E3A;&#x8FD9;&#x4E0D;&#x5229;&#x4E8E;&#x65E5;&#x540E;&#x6269;&#x5C55;&#x8BE5;&#x7ED3;&#x6784;&#x4F53;&#x3002;&#x800C;&#x5728; <code>neltink</code> &#x534F;&#x8BAE;&#x4E2D;&#x4E00;&#x9879;&#x5E38;&#x89C1;&#x4EFB;&#x52A1;&#x5C31;&#x662F;&#x6269;&#x5C55;&#x534F;
+&#x8BAE;&#x800C;&#x4E0D;&#x4F1A;&#x7834;&#x574F;&#x5B83;&#x7684;&#x5411;&#x540E;&#x517C;&#x5BB9;&#x6027;</p>
+<p><code>nla_validate()</code> &#x662F;&#x4F7F;&#x7528; <code>struct nla_policy</code> &#x7ED3;&#x6784;&#x4F53;&#x7684;&#x51FD;&#x6570;&#x4E4B;&#x4E00;&#x3002;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x63A5;&#x6536;&#x4E00;&#x4E2A;
+<code>struct nla_policy</code> &#x6570;&#x7EC4;&#x5E76;&#x4F7F;&#x7528;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x4F5C;&#x4E3A;&#x4E0B;&#x6807;&#x8BBF;&#x95EE;&#x6570;&#x7EC4;&#x3002;&#x5982;&#x679C;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x8D8A;&#x754C;&#x7684;&#x8BDD;
+&#x8FD9;&#x4E2A;&#x5C5E;&#x6027;&#x4F1A;&#x88AB;&#x5F53;&#x505A;&#x662F;&#x5408;&#x6CD5;&#x7684;&#x5C5E;&#x6027;&#x3002;&#x8FD9;&#x4E2A;&#x4E3A;&#x4E86;&#x4F7F;&#x65E7;&#x7684;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x5728;&#x65E0;&#x6CD5;&#x8BC6;&#x522B;&#x65B0;&#x5F15;&#x5165;&#x7684;&#x5C5E;&#x6027;&#x7684;&#x60C5;&#x51B5;
+&#x4E0B;&#x80FD;&#x6B63;&#x5E38;&#x5DE5;&#x4F5C;&#x800C;&#x7279;&#x610F;&#x8FDB;&#x884C;&#x7684;&#x5904;&#x7406;&#x3002;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netlink/attr.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">nla_validate</span><span class="params">(<span class="keyword">struct</span> nlattr *head, <span class="keyword">int</span> len, <span class="keyword">int</span> maxtype, <span class="keyword">struct</span> nla_policy *policy)</span></span></div></pre></td></tr></table></figure>
+<p>&#x5982;&#x679C;&#x5C5E;&#x6027;&#x5408;&#x6CD5; <code>nla_policy()</code> &#x51FD;&#x6570;&#x8FD4;&#x56DE; 0&#xFF0C;&#x5426;&#x5219;&#x5B83;&#x8FD4;&#x56DE;&#x4E00;&#x4E2A;&#x548C;&#x9519;&#x8BEF;&#x76F8;&#x5173;&#x7684;&#x9519;&#x8BEF;&#x7801;&#x3002;</p>
+<p>&#x5927;&#x90E8;&#x5206;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x4E0D;&#x4F1A;&#x76F4;&#x63A5;&#x4F7F;&#x7528; <code>nla_validate()</code> &#x800C;&#x662F;&#x4F7F;&#x7528; <code>nla_parse()</code> &#x51FD;&#x6570;&#x3002;&#x8FD9;&#x4E2A;&#x51FD;
+&#x6570;&#x4EE5;&#x540C;&#x6837;&#x7684;&#x65B9;&#x5F0F;&#x9A8C;&#x8BC1;&#x5C5E;&#x6027;&#xFF0C;&#x4F46;&#x662F;&#x5728;&#x9A8C;&#x8BC1;&#x7684;&#x540C;&#x65F6;&#x5B83;&#x8FD8;&#x4F1A;&#x89E3;&#x6790;&#x5C5E;&#x6027;&#x3002;
+[core_attr_parse_easy][attr_parse_eray] &#x4E00;&#x8282;&#x4E2D;&#x6709;&#x66F4;&#x591A;&#x7684;&#x4FE1;&#x606F;&#x4EE5;&#x53CA;&#x4E00;&#x4E2A;&#x4F8B;&#x5B50;&#x7A0B;&#x5E8F;&#x3002;</p>
+<p>&#x9A8C;&#x8BC1;&#x5C5E;&#x6027;&#x7684;&#x8BE6;&#x7EC6;&#x6B65;&#x9AA4;&#x5982;&#x4E0B;&#xFF1A;</p>
+<pre><code>1. &#x5982;&#x679C;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x662F; 0 &#x6216;&#x8005;&#x5927;&#x4E8E;&#x6700;&#x5927;&#x7684;&#x5C5E;&#x6027;&#x503C;&#xFF0C;&#x8FD4;&#x56DE; 0&#x3002;
+
+2. &#x5982;&#x679C;&#x5C5E;&#x6027;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x5C0F;&#x4E8E; minlen&#xFF0C;&#x8FD4;&#x56DE; -NLE_ERANGE&#x3002;
+
+3. &#x5982;&#x679C;&#x5B9A;&#x4E49;&#x4E86; maxlen &#x800C;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x8D85;&#x8FC7;&#x4E86;&#x8FD9;&#x4E2A;&#x503C;&#xFF0C; &#x8FD4;&#x56DE; -NLE_ERANGE&#x3002;
+
+4. &#x68C0;&#x9A8C;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x76F8;&#x5173;&#x7684;&#x89C4;&#x5219;&#xFF0C;&#x53C2;&#x8003;&#x5C5E;&#x6027;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x4E00;&#x8282;&#x3002;
+
+5. &#x5982;&#x679C;&#x4E0A;&#x9762;&#x7684;&#x5168;&#x90E8;&#x6761;&#x4EF6;&#x90FD;&#x6EE1;&#x8DB3;&#x7684;&#x8BDD;&#x8FD4;&#x56DE; 0&#x3002;
+</code></pre>
+<p></p><h3 id="jie-xi-shu-xing-de-bian-jie-fang-shi">&#x89E3;&#x6790;&#x5C5E;&#x6027;&#x7684;&#x4FBF;&#x6377;&#x65B9;&#x5F0F;</h3><p></p>
+<p>&#x5927;&#x90E8;&#x5206;&#x7684;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x4E0D;&#x4F1A;&#x60F3;&#x8981;&#x6309;&#x7167;<a href="#core_attr_parse_split">core_attr_parse_split</a> &#x4E2D;&#x63D0;&#x5230;&#x7684;&#x65B9;&#x5F0F;&#x81EA;&#x5DF1;&#x5206;&#x5272;&#x5C5E;&#x6027;&#x6D41;
+&#x3002;&#x4E00;&#x79CD;&#x66F4;&#x52A0;&#x4FBF;&#x6377;&#x7684;&#x65B9;&#x5F0F;&#x662F;&#x4F7F;&#x7528; <code>nla_parse()</code> &#x51FD;&#x6570;&#x3002;</p>
+<pre><code>#include &lt;netlink/attr.h&gt;
+
+int nla_parse(struct nlattr **attrs, int maxtype, struct nlattr *head,
+	int len, struct nla_policy *policy);
+</code></pre>
+<p><code>nla_parse()</code> &#x51FD;&#x6570;&#x4F1A;&#x8FED;&#x4EE3;&#x4E00;&#x6761;&#x5C5E;&#x6027;&#x6D41;&#xFF0C;&#x6309;&#x7167; <a href="#core_attr_validation">core_attr_validation</a>
+&#x4E2D;&#x63D0;&#x5230;&#x7684;&#x65B9;&#x5F0F;&#x9A8C;&#x8BC1;&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#xFF0C;&#x5982;&#x679C;&#x6240;&#x6709;&#x7684;&#x5C5E;&#x6027;&#x90FD;&#x901A;&#x8FC7;&#x4E86;&#x9A8C;&#x8BC1;&#x7684;&#x8BDD;&#xFF0C;&#x6307;&#x5411;&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x6307;&#x9488;
+&#x4F1A;&#x88AB;&#x5B58;&#x653E;&#x5728;&#x5C5E;&#x6027;&#x6570;&#x7EC4;&#x7684; <code>attrs[nla_type(attr)]</code> &#x4F4D;&#x7F6E;&#x4E2D;&#x3002;</p>
+<p>&#x9664;&#x4E86; <code>nla_parse()</code> &#x51FD;&#x6570;&#x4E4B;&#x5916;&#x4F60;&#x4E5F;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>nlmsg_parse()</code> &#x51FD;&#x6570;&#x628A;&#x89E3;&#x6790;&#x6D88;&#x606F;&#x548C;&#x89E3;&#x6790;&#x6D88;&#x606F;
+&#x7684;&#x5C5E;&#x6027;&#x7684;&#x5DE5;&#x4F5C;&#x5728;&#x4E00;&#x4E2A;&#x6B65;&#x9AA4;&#x4E2D;&#x5B8C;&#x6210;&#x3002;&#x5173;&#x4E8E;&#x5982;&#x4F55;&#x4F7F;&#x7528;&#x8FD9;&#x4E9B;&#x51FD;&#x6570;&#x8BF7;&#x53C2;&#x8003;
+<a href="#core_attr_parse_easy">core_attr_parse_easy</a> &#x4E00;&#x8282;&#x3002;</p>
+<p></p><h3 id="li-zi">&#x4F8B;&#x5B50;</h3><p></p>
+<p>&#x4E0B;&#x9762;&#x7684;&#x4F8B;&#x5B50;&#x5C55;&#x793A;&#x4E86;&#x5982;&#x4F55;&#x89E3;&#x6790;&#x4E00;&#x4E2A;&#x901A;&#x8FC7; <code>neltink</code> &#x534F;&#x8BAE;&#x53D1;&#x9001;&#x7684;&#x4E0D;&#x5305;&#x542B;&#x534F;&#x8BAE;&#x5934;&#x90E8;&#x7684; <code>neltink</code>
+&#x6D88;&#x606F;&#x3002;&#x4F46;&#x662F;&#x8FD9;&#x4E2A;&#x4F8B;&#x5B50;&#x5F3A;&#x5236;&#x4F7F;&#x7528;&#x4E86;&#x5C5E;&#x6027;&#x89C4;&#x5219;&#xFF08;policy&#xFF09;&#xFF0C;<code>MY_ATTR_FOO</code> &#x5FC5;&#x987B;&#x662F; 32 &#x4F4D;&#x7684;&#x6574;&#x6570;
+&#x800C; <code>MY_ATTR_BAR</code> &#x5FC5;&#x987B;&#x662F;&#x4E00;&#x4E2A;&#x6700;&#x591A;&#x5305;&#x542B; 16 &#x4E2A;&#x5B57;&#x7B26;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x3002;</p>
+<pre><code>#include &lt;netlink/msg.h&gt;
+#include &lt;netlink/attr.h&gt;
+
+enum {
+	MY_ATTR_FOO = 1,
+	MY_ATTR_BAR,
+	__MY_ATTR_MAX,
+};
+
+
+#define MY_ATTR_MAX (__MY_ATTR_MAX - 1)
+
+
+static struct nla_policy my_policy[MY_ATTR_MAX+1] = {
+	[MY_ATTR_FOO] = { .type = NLA_U32 },
+	[MY_ATTR_BAR] = { .type = NLA_STRING,
+			  .maxlen = 16 },
+};
+
+
+void parse_msg(struct nlmsghdr *nlh)
+{
+	struct nlattr *attrs[MY_ATTR_MAX+1];
+
+	if (nlmsg_parse(nlh, 0, attrs, MY_ATTR_MAX, my_policy) &lt; 0)
+		/* &#x51FA;&#x9519;&#x5904;&#x7406; */
+
+	if (attrs[MY_ATTR_FOO]) {
+		/* &#x6D88;&#x606F;&#x4E2D;&#x5B58;&#x5728; MY_ATTR_FOO &#x7C7B;&#x578B;&#x7684;&#x5C5E;&#x6027; */
+		printf(&quot;value: %u\n&quot;, nla_get_u32(attrs[MY_ATTR_FOO]));
+	}
+}
+</code></pre>
+<p></p><h3 id="ding-wei-dan-ge-shu-xing">&#x5B9A;&#x4F4D;&#x5355;&#x4E2A;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x5982;&#x679C;&#x4E00;&#x4E2A;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x53EA;&#x5728;&#x4E4E;&#x5355;&#x4E2A;&#x5C5E;&#x6027;&#xFF0C;&#x90A3;&#x4E48;&#x5B83;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>nla_find()</code> &#x51FD;&#x6570;&#x548C;
+<code>nlmsg_find_attr()</code> &#x51FD;&#x6570;&#x3002;&#x8FD9;&#x4E9B;&#x51FD;&#x6570;&#x4F1A;&#x8FED;&#x4EE3;&#x6240;&#x6709;&#x7684;&#x5C5E;&#x6027;&#xFF0C;&#x627E;&#x5230;&#x4E00;&#x4E2A;&#x7B26;&#x5408;&#x6761;&#x4EF6;&#x7684;&#x5C5E;&#x6027;&#x7136;&#x540E;&#x53D1;
+&#x6325;&#x8FD9;&#x4E2A;&#x5C5E;&#x6027;&#x5934;&#x90E8;&#x7684;&#x6307;&#x9488;&#x3002;</p>
+<pre><code>#include &lt;netlink/attr.h&gt;
+
+struct nlattr *nla_find(struct nlattr *head, int len, int attrtype);
+
+
+
+
+#include &lt;netlink/msg.h&gt;
+
+struct nlattr *nlmsg_find_attr(struct nlmsghdr * hdr, int hdrlen, int attrtype);
+</code></pre>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;</strong> <code>nla_find()</code> &#x548C; <code>nlmsg_find_attr()</code> &#x4E0D;&#x4F1A;&#x641C;&#x7D22;&#x5D4C;&#x5957;&#x7684;&#x5C5E;&#x6027;&#xFF0C;&#x53C2;&#x8003;
+<a href="#nested_attr">&#x5D4C;&#x5957;&#x5C5E;&#x6027;</a> &#x4E00;&#x8282;</p>
+<p></p><h3 id="die-dai-shu-xing-liu">&#x8FED;&#x4EE3;&#x5C5E;&#x6027;&#x6D41;</h3><p></p>
+<p>&#x6709;&#x4E9B;&#x65F6;&#x5019;&#x4E3A;&#x5C5E;&#x6027;&#x6D41;&#x4E2D;&#x7684;&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x90FD;&#x8BBE;&#x7F6E;&#x4E00;&#x4E2A;&#x552F;&#x4E00;&#x7684;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x5E76;&#x4E0D;&#x592A;&#x5408;&#x7406;&#x3002;&#x6BD4;&#x5982;&#x4E00;&#x4E2A;&#x5217;&#x8868;&#x53EF;
+&#x4EE5;&#x901A;&#x8FC7;&#x4E00;&#x7CFB;&#x5217;&#x7684;&#x5C5E;&#x6027;&#x6765;&#x4F20;&#x8F93;&#xFF0C;&#x5373;&#x4FBF;&#x6BCF;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x662F;&#x90FD;&#x662F;&#x9012;&#x589E;&#x7684;&#xFF0C;&#x4F7F;&#x7528;
+<code>nlmsg_parse()</code> &#x6216;&#x8005; <code>nla_parse()</code> &#x51FD;&#x6570;&#x586B;&#x5145;&#x4E00;&#x4E2A;&#x6570;&#x7EC4;&#x7684;&#x505A;&#x6CD5;&#x4E5F;&#x662F;&#x4E0D;&#x5408;&#x7406;&#x7684;<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>&#x3002;</p>
+<p>&#x56E0;&#x6B64;&#x5E93;&#x4E2D;&#x63D0;&#x4F9B;&#x4E86;&#x8FED;&#x4EE3;&#x5C5E;&#x6027;&#x6D41;&#x7684;&#x65B9;&#x6CD5;&#xFF1A;</p>
+<pre><code>#include &lt;netlink/attr.h&gt;
+
+nla_for_each_attr(attr, head, len, remaining)
+</code></pre>
+<p><code>nla_for_each_attr()</code> &#x662F;&#x4E00;&#x4E2A;&#x5B8F;&#xFF0C;&#x4F60;&#x53EF;&#x4EE5;&#x5728;&#x4EE3;&#x7801;&#x5757;&#x4E4B;&#x524D;&#x4F7F;&#x7528;&#xFF1A;</p>
+<pre><code>#include &lt;netlink/attr.h&gt;
+
+struct nlattr *nla;
+int rem;
+
+nla_for_each_attr(nla, attrstream, streamlen, rem) {
+	/* &#x9A8C;&#x8BC1;&#x5E76;&#x89E3;&#x6790;&#x5C5E;&#x6027; */
+
+}
+
+if (rem &gt; 0)
+	/* &#x6CA1;&#x6709;&#x89E3;&#x6790;&#x7684;&#x6570;&#x636E; */
+</code></pre>
+<p></p><h2 id="6-3-shu-xing-de-gou-zao">6.3. &#x5C5E;&#x6027;&#x7684;&#x6784;&#x9020;</h2><p></p>
+<p>&#x5F80; <code>neltink</code> &#x6D88;&#x606F;&#x4E2D;&#x6DFB;&#x52A0;&#x5C5E;&#x6027;&#x7684;&#x63A5;&#x53E3;&#x662F;&#x5EFA;&#x7ACB;&#x5728;&#x666E;&#x901A;&#x7684;&#x6D88;&#x606F;&#x6784;&#x5EFA;&#x63A5;&#x53E3;&#x4E4B;&#x4E0A;&#x7684;&#x3002;&#x8FD9;&#x91CC;&#x5047;&#x8BBE;&#x6D88;&#x606F;
+&#x7684;&#x5934;&#x90E8;&#x548C;&#x5B9E;&#x9645;&#x7684; <code>netlink</code> &#x534F;&#x8BAE;&#x7684;&#x5934;&#x90E8;&#x5DF2;&#x7ECF;&#x6DFB;&#x52A0;&#x5230;&#x6D88;&#x606F;&#x4E2D;&#x4E86;&#x3002;</p>
+<pre><code>struct nlattr * nla_reserve(struct nl_msg *msg, int attrtype, int len);
+</code></pre>
+<p><code>nla_reserve()</code> &#x51FD;&#x6570;&#x5728;&#x6D88;&#x606F;&#x7684;&#x672B;&#x5C3E;&#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x5934;&#x90E8;&#x5E76;&#x4E14;&#x4E3A;&#x5C5E;&#x6027;&#x8F7D;&#x8377;&#x9884;&#x7559; <code>len</code> &#x5B57;&#x8282;&#x7684;
+&#x7A7A;&#x95F4;&#x3002;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x4F1A;&#x8FD4;&#x56DE;&#x6D88;&#x606F;&#x4E2D;&#x7684;&#x5C5E;&#x6027;&#x8F7D;&#x8377;&#x6BB5;&#x7684;&#x6307;&#x9488;&#x3002;&#x4E3A;&#x4E86;&#x4FDD;&#x8BC1;&#x4E0B;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x6B63;&#x786E;&#x7684;&#x5BF9;&#x9F50;&#xFF0C;&#x8FD9;&#x4E2A;
+&#x51FD;&#x6570;&#x8FD8;&#x4F1A;&#x5728;&#x6DFB;&#x52A0;&#x7684;&#x5C5E;&#x6027;&#x7684;&#x672B;&#x5C3E;&#x8FDB;&#x884C;&#x5FC5;&#x8981;&#x586B;&#x5145;&#x3002;</p>
+<pre><code>int nla_put(struct nl_msg *msg, int attrtype, int attrlen, const void *data);
+</code></pre>
+<p><code>nla_put()</code> &#x51FD;&#x6570;&#x4EE5; <code>nla_reserve()</code> &#x51FD;&#x6570;&#x4E3A;&#x57FA;&#x7840;&#xFF0C;&#x53EA;&#x4E0D;&#x8FC7;&#x5B83;&#x8FD8;&#x63A5;&#x6536;&#x4E00;&#x4E2A;&#x6307;&#x5411;&#x5305;&#x542B;&#x5C5E;&#x6027;&#x8F7D;&#x8377;
+&#x7684;&#x7F13;&#x51B2;&#x533A;&#x7684;&#x6307;&#x9488;&#x3002;&#x8FD9;&#x4E2A;&#x51FD;&#x6570;&#x4F1A;&#x81EA;&#x52A8;&#x628A;&#x6570;&#x636E;&#x4ECE;&#x7F13;&#x51B2;&#x533A;&#x62F7;&#x8D1D;&#x5230;&#x6D88;&#x606F;&#x4E2D;&#x53BB;&#x3002;</p>
+<p><strong>&#x4F8B;&#x5B50;</strong></p>
+<pre><code>struct my_attr_sturct {
+	uint32_t a;
+	uint32_t b;
+};
+
+int my_put(struct nl_msg *msg)
+{
+	struct my_attr_sturct obj = {
+		.a = 10,
+		.b = 20,
+	};
+
+	return nla_put(msg, ATTR_MY_STRUCT, sizeof(obj), &amp;obj);
+}
+</code></pre>
+<p>&#x5173;&#x4E8E;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x76F8;&#x5173;&#x7684;&#x5C5E;&#x6027;&#x6784;&#x9020;&#x8BF7;&#x67E5;&#x770B; <a href="#attr_datatype">&#x5C5E;&#x6027;&#x6570;&#x636E;&#x7C7B;&#x578B;</a> &#x4E00;&#x8282;&#x3002;</p>
+<p></p><h2 id="ji-yu-yi-chang-de-shu-xing-gou-zao">&#x57FA;&#x4E8E;&#x5F02;&#x5E38;&#x7684;&#x5C5E;&#x6027;&#x6784;&#x9020;</h2><p></p>
+<p>&#x548C;&#x5185;&#x6838; API &#x7C7B;&#x4F3C;&#xFF0C;&#x8FD9;&#x4E2A;&#x5E93;&#x63D0;&#x4F9B;&#x4E86;&#x57FA;&#x4E8E;&#x5F02;&#x5E38;&#x7684;&#x63A5;&#x53E3;&#x3002;&#x8FD9;&#x4E9B;&#x5B8F;&#x7684;&#x884C;&#x4E3A;&#x548C;&#x4ED6;&#x4EEC;&#x5BF9;&#x5E94;&#x7684;&#x65B9;&#x6CD5;&#x662F;&#x4E00;&#x81F4;&#x7684;&#xFF0C;
+&#x4E0D;&#x540C;&#x4E4B;&#x5904;&#x5728;&#x51FA;&#x9519;&#x65F6;&#x8FD9;&#x4E9B;&#x5B8F;&#x4F1A;&#x8DF3;&#x8F6C;&#x5230; <code>nla_put_failure</code> &#x4F4D;&#x7F6E;&#x3002;</p>
+<p><strong>&#x4F8B;&#x5B50;</strong><sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+<pre><code>#inlcude &lt;netlink/msg.h&gt;
+#include &lt;netlink/attr.h&gt;
+
+void construct_attrs(struct nl_msg *msg)
+{
+	NLA_PUT_STRING(msg, MY_ATTR_FOO1, &quot;some text&quot;);
+	NLA_PUT_U32(msg, MY_ATTR_FOO2, 0x1010);
+	NLA_PUT_FLAG(msg, MY_ATTR_FOO3, 1);
+
+	return 0;
+
+nla_put_failure:
+	/* NLA_PUT &#x7CFB;&#x5217;&#x7684;&#x5B8F;&#x4F1A;&#x5728;&#x51FA;&#x9519;&#x7684;&#x65F6;&#x5019;&#x8DF3;&#x8F6C;&#x5230;&#x8FD9;&#x4E2A;&#x4F4D;&#x7F6E; */
+	return EMSGSIZE;
+}
+</code></pre>
+<p>&#x5173;&#x4E8E;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x76F8;&#x5173;&#x7684;&#x5F02;&#x5E38;&#x5904;&#x7406;&#x53D8;&#x79CD;&#x8BF7;&#x67E5;&#x770B; <a href="#attr_datatype">&#x5C5E;&#x6027;&#x6570;&#x636E;&#x7C7B;&#x578B;</a> &#x4E00;&#x8282;&#x3002;</p>
+<p></p><h2 id="6-4-shu-xing-shu-ju-lei-xing">6.4. &#x5C5E;&#x6027;&#x6570;&#x636E;&#x7C7B;&#x578B;</h2><p></p>
+<p>&#x4E3A;&#x4E86;&#x7B80;&#x5316;&#x5C5E;&#x6027;&#x7684;&#x8BBF;&#x95EE;&#x548C;&#x9A8C;&#x8BC1;&#x5E93;&#x4E2D;&#x5B9A;&#x4E49;&#x4E86;&#x8BB8;&#x591A;&#x57FA;&#x672C;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x3002;&#x5C5E;&#x6027;&#x7684;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x5E76;&#x6CA1;&#x6709;&#x7F16;&#x7801;&#x5728;
+&#x5C5E;&#x6027;&#x4E2D;&#xFF0C;&#x6240;&#x4EE5;&#x53D1;&#x9001;&#x65B9;&#x548C;&#x63A5;&#x6536;&#x65B9;&#x5BF9;&#x4E8E;&#x54EA;&#x4E00;&#x4E2A;&#x5C5E;&#x6027;&#x5C5E;&#x4E8E;&#x4F55;&#x79CD;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x8981;&#x6709;&#x4E00;&#x81F4;&#x7684;&#x5B9A;&#x4E49;&#x3002;</p>
+<table rules="all" width="100%" frame="border" cellspacing="0" cellpadding="4">
+	<col width="16%">
+	<col width="83%">
+	<thead>
+		<tr>
+			<th align="left" valign="top"> &#x7C7B;&#x578B;             </th>
+			<th align="left" valign="top"> &#x63CF;&#x8FF0;</th>
+		</tr>
+	</thead>
+<pre><code>&lt;tbody&gt;
+	&lt;tr&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&lt;code&gt;NLA_UNSPEC&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&#x4E0D;&#x786E;&#x5B9A;&#x7684;&#x5C5E;&#x6027;&lt;/p&gt;&lt;/td&gt;
+	&lt;/tr&gt;
+	&lt;tr&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&lt;code&gt;NLA_U{8|16|32}&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&#x6574;&#x578B;&lt;/p&gt;&lt;/td&gt;
+	&lt;/tr&gt;
+	&lt;tr&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&lt;code&gt;NLA_STRING&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&#x5B57;&#x7B26;&#x4E32;&lt;/p&gt;&lt;/td&gt;
+	&lt;/tr&gt;
+	&lt;tr&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&lt;code&gt;NLA_FLAG&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&#x6807;&#x5FD7;&lt;/p&gt;&lt;/td&gt;
+	&lt;/tr&gt;
+	&lt;tr&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&lt;code&gt;NLA_NESTED&lt;/code&gt;&lt;/p&gt;&lt;/td&gt;
+		&lt;td align=&quot;left&quot; valign=&quot;top&quot;&gt;&lt;p class=&quot;table&quot;&gt;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&lt;/p&gt;&lt;/td&gt;
+	&lt;/tr&gt;
+&lt;/tbody&gt;
+</code></pre>
+</table>
+<p>&#x8FD9;&#x4E9B;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x9664;&#x4E86;&#x80FD;&#x591F;&#x7B80;&#x5316;&#x5C5E;&#x6027;&#x8BBF;&#x95EE;&#x4E4B;&#x5916;&#xFF0C;&#x6700;&#x5927;&#x7684;&#x4F18;&#x52BF;&#x5728;&#x4E8E;&#x5BF9;&#x4E8E;&#x6BCF;&#x4E2A;&#x5C5E;&#x6027;&#x4F1A;&#x57FA;&#x4E8E;&#x4E00;&#x4E2A; <code>policy</code>
+&#x81EA;&#x52A8;&#x8FDB;&#x884C;&#x5408;&#x6CD5;&#x6027;&#x68C0;&#x9A8C;&#x3002;&#x8FD9;&#x79CD;&#x68C0;&#x9A8C;&#x4F1A;&#x901A;&#x8FC7;&#x68C0;&#x67E5;&#x8F7D;&#x8377;&#x7684;&#x6700;&#x5C0F;&#x957F;&#x5EA6;&#xFF08;&#x5BF9;&#x67D0;&#x4E9B;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x4E5F;&#x4F1A;&#x8FDB;&#x884C;&#x8F7D;&#x8377;
+&#x6700;&#x5927;&#x957F;&#x5EA6;&#x7684;&#x68C0;&#x9A8C;&#xFF09;&#x6765;&#x4FDD;&#x8BC1;&#x8BBF;&#x95EE;&#x8F7D;&#x8377;&#x7684;&#x5B89;&#x5168;&#x6027;&#x3002;</p>
+<p></p><h3 id="6-4-1-zheng-xing-shu-xing">6.4.1. &#x6574;&#x578B;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x4F7F;&#x7528;&#x5F97;&#x6700;&#x591A;&#x7684;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x662F;&#x6574;&#x578B;&#x3002;&#x6574;&#x578B;&#x6709;&#x56DB;&#x79CD;&#x4E0D;&#x540C;&#x7684;&#x5927;&#x5C0F;&#xFF1A;</p>
+<pre><code>NLA_U8	 	8  &#x4F4D;&#x7684;&#x6574;&#x6570;
+NLA_U16 	16 &#x4F4D;&#x7684;&#x6574;&#x6570;
+NLA_U32 	32 &#x4F4D;&#x7684;&#x6574;&#x6570;
+NLA_U64 	64 &#x4F4D;&#x7684;&#x6574;&#x6570;
+</code></pre>
+<p>&#x6CE8;&#x610F;&#x7531;&#x4E8E;&#x5BF9;&#x9F50;&#x9700;&#x6C42;&#x7684;&#x5B58;&#x5728;&#xFF0C;&#x4F7F;&#x7528; <code>NLA_U8</code> &#x548C; <code>NLA_U16</code> &#x89C4;&#x683C;&#x7684;&#x6574;&#x578B;&#x8D77;&#x4E0D;&#x5230;&#x8282;&#x7701; <code>nelink</code>
+&#x6D88;&#x606F;&#x7A7A;&#x95F4;&#x7684;&#x4F5C;&#x7528;&#xFF0C;&#x4F7F;&#x7528;&#x5B83;&#x4EEC;&#x53EA;&#x662F;&#x4E3A;&#x4E86;&#x9650;&#x5236;&#x5C5E;&#x6027;&#x503C;&#x7684;&#x8303;&#x56F4;&#x3002;</p>
+<p><strong>&#x89E3;&#x6790;&#x6574;&#x578B;&#x5C5E;&#x6027;</strong></p>
+<pre><code>#include &lt;neltink/attr.h&gt;
+
+uint8_t nla_get_u8(struct nlattr *hdr);
+uint16_t nla_get_u16(struct nlattr *hdr);
+uint32_t nla_get_u32(struct nlattr *hdr);
+uint64_t nla_get_u64(struct nlattr *hdr);
+</code></pre>
+<p>&#x4F8B;&#x5B50;&#xFF1A;</p>
+<pre><code>if (attrs[MY_ATTR_FOO])
+	uint32_t val = nla_get_u32(attrs[MY_ATTR_FOO]);
+</code></pre>
+<p><strong>&#x6784;&#x5EFA;&#x6574;&#x578B;&#x5C5E;&#x6027;</strong></p>
+<pre><code>#include &lt;neltink/attr.h&gt;
+
+int nla_put_u8(struct nl_msg *msg, int attrtype, uint8_t value);
+int nla_put_u16(struct nl_msg *msg, int attrtype, uint16_t value);
+int nla_put_u32(struct nl_msg *msg, int attrtype, uint32_t value);
+int nla_put_u64(struct nl_msg *msg, int attrtype, uint64_t value);
+</code></pre>
+<p>&#x57FA;&#x4E8E;&#x5F02;&#x5E38;&#x7684;&#x5BF9;&#x5E94;&#x51FD;&#x6570;&#xFF1A;</p>
+<pre><code>NLA_PUT_U8(msg, attrtype, value);
+NLA_PUT_U16(msg, attrtype, value);
+NLA_PUT_U32(msg, attrtype, value);
+NLA_PUT_U64(msg, attrtype, value);
+</code></pre>
+<p><strong>&#x9A8C;&#x8BC1;</strong></p>
+<p>&#x5982;&#x679C;&#x4F60;&#x5728;&#x5728;&#x586B;&#x5145;&#x4E00;&#x4E2A; <code>struct nl_policy</code> &#x6570;&#x7EC4;&#x7684;&#x65F6;&#x5019;&#x4F7F;&#x7528; <code>NLA_U8</code>&#x3001;<code>NLA_U16</code>&#x3001;<code>NLA_U32</code>
+&#x6216;&#x8005; <code>NLA_U64</code> &#x6765;&#x5B9A;&#x4E49;&#x6574;&#x6570;&#x7C7B;&#x578B;&#xFF0C;<code>libnl</code> &#x5E93;&#x4F1A;&#x4FDD;&#x8BC1;&#x8FD9;&#x4E9B; <code>policy</code> &#x4F7F;&#x7528;&#x6B63;&#x786E;&#x7684;&#x7684;&#x6700;&#x5C0F;&#x8F7D;&#x8377;
+&#x957F;&#x5EA6;&#x3002;</p>
+<p>&#x9A8C;&#x8BC1;&#x5E76;&#x4E0D;&#x533A;&#x5206;&#x6709;&#x7B26;&#x53F7;&#x548C;&#x65E0;&#x7B26;&#x53F7;&#x6574;&#x6570;&#xFF0C;&#x552F;&#x4E00;&#x7684;&#x51B3;&#x5B9A;&#x56E0;&#x7D20;&#x662F;&#x6570;&#x636E;&#x7684;&#x5927;&#x5C0F;&#x3002;&#x5982;&#x679C;&#x5E94;&#x7528;&#x7A0B;&#x5E8F;&#x9700;&#x8981;&#x4FDD;&#x8BC1;
+&#x6570;&#x636E;&#x5728;&#x67D0;&#x4E2A;&#x7279;&#x5B9A;&#x7684;&#x8303;&#x56F4;&#x7684;&#x8BDD;&#xFF0C;&#x5B83;&#x9700;&#x8981;&#x81EA;&#x5DF1;&#x5B8C;&#x6210;&#x8FD9;&#x4E00;&#x9879;&#x68C0;&#x9A8C;&#x3002;</p>
+<pre><code>static struct nla_policy my_policy[ATTR_MAX+1]={
+	[ATTR_FOO]={.type=NLA_U32},
+	[ATTR_BAR]={.type=NLA_U8},
+};
+</code></pre>
+<p>&#x4E0A;&#x9762;&#x8FD9;&#x6BB5;&#x4EE3;&#x7801;&#x7B49;&#x4EF7;&#x4E8E;&#xFF1A;</p>
+<pre><code>static struct nla_policy my_policy[ATTR_MAX+1]={
+	[ATTR_FOO]={.minlen=sizeof(uint32_t)},
+	[ATTR_BAR]={.minlen=sizeof(uint8_t)},
+};
+</code></pre>
+<p></p><h3 id="6-4-2-zi-fu-chuan-shu-xing">6.4.2. &#x5B57;&#x7B26;&#x4E32;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x5B57;&#x7B26;&#x4E32;&#x7C7B;&#x578B;&#x7528;&#x6765;&#x6807;&#x8BC6;&#x4E00;&#x4E2A;&#x4EE5; <code>NUL</code> &#x7ED3;&#x5C3E;&#x7684;&#x4E0D;&#x5B9A;&#x957F;&#x5B57;&#x7B26;&#x5E8F;&#x5217;&#x3002;&#x5B83;&#x4E0D;&#x662F;&#x7528;&#x6765;&#x6807;&#x8BC6;&#x4E8C;&#x8FDB;&#x5236;&#x6570;&#x636E;&#x6D41;&#x3002;</p>
+<p>&#x5B57;&#x7B26;&#x4E32;&#x5C5E;&#x6027;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x53EF;&#x4EE5;&#x901A;&#x8FC7;&#x8C03;&#x7528; <code>nla_get_string()</code> &#x51FD;&#x6570;&#x6765;&#x83B7;&#x5F97;&#x3002;<code>nla_strdup()</code>
+&#x51FD;&#x6570;&#x4F1A;&#x5BF9;&#x5C5E;&#x6027;&#x8F7D;&#x8377;&#x8C03;&#x7528; <code>strdup()</code> &#x51FD;&#x6570;&#x5E76;&#x8FD4;&#x56DE;&#x65B0;&#x5206;&#x914D;&#x7684;&#x5B57;&#x7B26;&#x4E32;&#x3002;</p>
+<pre><code>#inlcude &lt;neltink/attr.h&gt;
+
+char *nla_get_string(struct nlattr *hdr);
+char *nla_strdup(struct nlattr *hdr);
+</code></pre>
+<p>&#x5B57;&#x7B26;&#x4E32;&#x5C5E;&#x6027;&#x662F;&#x901A;&#x8FC7; <code>nla_put_string()</code> &#x6216;&#x8005;&#x5BF9;&#x5E94;&#x7684; <code>NLA_PUT_STRING()</code> &#x5B8F;&#x5206;&#x914D;&#x7684;&#x3002;&#x5C5E;&#x6027;
+&#x7684;&#x957F;&#x5EA6;&#x662F; <code>strlen() + 1</code>&#xFF0C;&#x56E0;&#x4E3A;&#x672B;&#x5C3E;&#x7684; <code>NUL</code> &#x5B57;&#x7B26;&#x4E5F;&#x4F1A;&#x5305;&#x62EC;&#x5728;&#x5185;&#x3002;</p>
+<pre><code>int nla_put_string(struct msg, int attrtype, const char *data);
+NLA_PUT_STRING(msg, attrtype, data);
+</code></pre>
+<p>&#x4E3A;&#x4E86;&#x9A8C;&#x8BC1;&#x5B57;&#x7B26;&#x4E32;&#x5C5E;&#x6027;&#xFF0C;&#x4F60;&#x53EF;&#x4EE5;&#x5728;&#x5B9A;&#x4E49; <code>struct nla_policy</code> &#x65F6;&#x4F7F;&#x7528; <code>NLA_STRING</code> &#x7C7B;&#x578B;&#x3002;
+&#x8FD9;&#x4E2A;&#x7C7B;&#x578B;&#x610F;&#x5473;&#x7740;&#x8F7D;&#x8377;&#x7684;&#x6700;&#x77ED;&#x957F;&#x5EA6;&#x662F; 1 &#x5B57;&#x8282;&#xFF0C;&#x5E76;&#x4E14;&#x4F1A;&#x68C0;&#x67E5; <code>NUL</code> &#x5B57;&#x7B26;&#x7684;&#x5B58;&#x5728;&#x3002;&#x6B64;&#x5916;&#x4F60;&#x53EF;&#x4EE5;
+&#x4F7F;&#x7528; <code>maxlen</code> &#x5B57;&#x6BB5;&#x6765;&#x5B9A;&#x4E49;&#x5B57;&#x7B26;&#x5E8F;&#x5217;&#x7684;&#x6700;&#x5927;&#x957F;&#x5EA6;&#xFF08;&#x5305;&#x62EC;&#x672B;&#x5C3E;&#x7684; <code>NUL</code> &#x5B57;&#x7B26;&#xFF09;&#x3002;</p>
+<pre><code>static struct nla_policy my_policy[] = {
+	[ATTR_FOO] = {
+		.type = NLA_STRING,
+		.maxlen = IFNAMSIZ,
+	},
+};
+</code></pre>
+<p></p><h3 id="6-4-3-biao-zhi-shu-xing">6.4.3 &#x6807;&#x5FD7;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x6807;&#x5FD7;&#x5C5E;&#x6027;&#x4EE3;&#x8868;&#x4E00;&#x4E2A;&#x5E03;&#x5C14;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x3002;&#x5982;&#x679C;&#x5C5E;&#x6027;&#x5B58;&#x5728;&#x5219;&#x8868;&#x793A;&#x503C;&#x4E3A;&#x771F;&#xFF0C;&#x4E0D;&#x5B58;&#x5728;&#x5219;&#x8868;&#x793A;&#x503C;&#x4E3A;&#x5047;&#x3002;&#x6240;&#x4EE5;
+&#x6807;&#x5FD7;&#x5C5E;&#x6027;&#x7684;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x6C38;&#x8FDC;&#x90FD;&#x662F; <code>0</code>&#x3002;</p>
+<pre><code>int nla_get_flag(struct nlattr *hdr);
+int nla_put_flag(struct nl_msg, int attrtype);
+</code></pre>
+<p>&#x4E3A;&#x4E86;&#x65B9;&#x4FBF;&#x9A8C;&#x8BC1;&#xFF0C;&#x5E93;&#x4E2D;&#x4E5F;&#x5B9A;&#x4E49;&#x4E86; <code>NLA_FLAG</code> &#x5C5E;&#x6027;&#x3002;&#x5B83;&#x8868;&#x793A; <code>maxlen</code> &#x4E3A; <code>0</code> &#x4E5F;&#x5C31;&#x4FDD;&#x8BC1;&#x4E86;&#x6700;&#x5927;
+&#x7684;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x662F; <code>0</code>&#x3002;</p>
+<p><strong>&#x4F8B;&#x5B50;</strong></p>
+<pre><code>/* nla_put_flag() &#x5728;&#x6D88;&#x606F;&#x4E2D;&#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x957F;&#x5EA6;&#x4E3A; 0 &#x7684;&#x5C5E;&#x6027;&#x3002;*/
+nla_put_flag(msg, ATTR_FOO);
+
+/* &#x6CA1;&#x6709;&#x5BF9;&#x5E94;&#x7684;&#x63A5;&#x6536;&#x65B9;&#x6CD5;&#xFF0C;&#x56E0;&#x4E3A;&#x5C5E;&#x6027;&#x7684;&#x5B58;&#x5728;&#x4E0E;&#x5426;&#x4EE3;&#x8868;&#x4E86;&#x5C5E;&#x6027;&#x7684;&#x503C; */
+if (attrs[ATTR_FOO])
+	/* &#x6807;&#x5FD7;&#x5B58;&#x5728; */
+</code></pre>
+<p></p><h3 id="6-4-4-qian-tao-shu-xing">6.4.4 &#x5D4C;&#x5957;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x5728; <a href="#attributes">&#x5C5E;&#x6027;</a> &#x4E00;&#x8282;&#x4E2D;&#x5DF2;&#x7ECF;&#x63D0;&#x5230;&#xFF0C;&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x5D4C;&#x5957;&#x4EE5;&#x8868;&#x8FBE;&#x5C5E;&#x6027;&#x4E4B;&#x95F4;&#x7684;&#x590D;&#x6742;&#x6811;&#x5F62;&#x7ED3;&#x6784;&#x3002;&#x5C5E;&#x6027;
+&#x5D4C;&#x5957;&#x4E5F;&#x901A;&#x5E38;&#x4E5F;&#x7528;&#x6765;&#x8868;&#x793A;&#x4E00;&#x4E2A;&#x5B50;&#x7CFB;&#x7EDF;&#x5728;&#x6D88;&#x606F;&#x4E2D;&#x7684;&#x5B50;&#x6BB5;&#x3002;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x901A;&#x5E38;&#x8FD8;&#x4F1A;&#x7528;&#x6765;&#x4F20;&#x8F93;&#x5BF9;&#x8C61;&#x7684;&#x5217;&#x8868;&#x3002;</p>
+<p>&#x5F53;&#x8FDB;&#x884C;&#x5C5E;&#x6027;&#x5D4C;&#x5957;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5D4C;&#x5957;&#x7684;&#x5C5E;&#x6027;&#x4F5C;&#x4E3A;&#x7236;&#x5C5E;&#x6027;&#xFF08;&#x5BB9;&#x5668;&#x5C5E;&#x6027;-container&#xFF09;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x800C;&#x5B58;&#x5728;&#x3002;</p>
+<p><strong>&#x6CE8;&#x610F;&#xFF1A;</strong> &#x5F53;&#x4F7F;&#x7528; <code>nlmsg_validate()</code>&#x3001;<code>nlmsg_parse()</code>&#x3001;<code>nla_validate()</code> &#x6216;&#x8005;
+<code>nla_parse()</code> &#x51FD;&#x6570;&#x6765;&#x9A8C;&#x8BC1;&#x5C5E;&#x6027;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x5B83;&#x4EEC;&#x53EA;&#x4F1A;&#x9A8C;&#x8BC1;&#x7B2C;&#x4E00;&#x5C42;&#x7684;&#x5C5E;&#x6027;&#x3002;&#x8FD9;&#x4E9B;&#x51FD;&#x6570;&#x90FD;&#x4E0D;&#x4F1A;&#x9012;&#x5F52;
+&#x7684;&#x9A8C;&#x8BC1;&#x5C5E;&#x6027;&#x3002;&#x6240;&#x4EE5;&#x4F60;&#x5FC5;&#x987B;&#x5BF9;&#x6BCF;&#x4E00;&#x5C42;&#x7684;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x663E;&#x5F0F;&#x7684;&#x8C03;&#x7528; <code>nla_validate()</code> &#x6216;&#x8005;
+<code>nla_parse_nested()</code></p>
+<p>&#x5F53;&#x5B9A;&#x4E49;&#x4E00;&#x4E2A;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x7684; <code>struct policy</code> &#x7ED3;&#x6784;&#x7684;&#x65F6;&#x5019;&#x4F60;&#x5E94;&#x8BE5;&#x4F7F;&#x7528; <code>NLA_NESTED</code> &#x7C7B;&#x578B;&#x3002;&#x5B83;
+&#x4E0D;&#x4F1A;&#x5F3A;&#x5236;&#x4F7F;&#x7528;&#x4EFB;&#x4F55;&#x6700;&#x5C0F;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#xFF0C;&#x9664;&#x975E;&#x4F60;&#x81EA;&#x5DF1;&#x63D0;&#x4F9B;&#x4E86;&#x8FD9;&#x4E2A;&#x5B57;&#x6BB5;&#x3002;&#x8FD9;&#x662F;&#x56E0;&#x4E3A;&#x67D0;&#x4E9B; <code>neltink</code>
+&#x534F;&#x8BAE;&#x5141;&#x8BB8;&#x7A7A;&#x7684;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x3002;</p>
+<pre><code>static struct nla_policy my_policy[] = {
+	[ATTR_FOO] = {.type = NLA_NESTED},
+};
+</code></pre>
+<p><strong>&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x7684;&#x89E3;&#x6790;</strong></p>
+<p><code>nla_parse_nested()</code> &#x51FD;&#x6570;&#x53EF;&#x4EE5;&#x7528;&#x6765;&#x89E3;&#x6790;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x3002;&#x5B83;&#x7684;&#x884C;&#x4E3A;&#x548C; <code>nla_parse()</code> &#x51FD;&#x6570;&#x662F;
+&#x4E00;&#x81F4;&#x7684;&#xFF0C;&#x53EA;&#x4E0D;&#x8FC7;&#x5B83;&#x63A5;&#x6536;&#x4E00;&#x4E2A; <code>struct nlattr</code> &#x4F5C;&#x4E3A;&#x53C2;&#x6570;&#x5E76;&#x4E14;&#x4F1A;&#x4F7F;&#x7528;&#x8FD9;&#x4E2A;&#x5C5E;&#x6027;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x4F5C;&#x4E3A;
+&#x5C5E;&#x6027;&#x6D41;&#x8FDB;&#x884C;&#x89E3;&#x6790;&#x3002;</p>
+<pre><code>if (attrs[ATTR_OPTS]) {
+	struct nlattr *nested[NESTED_MAX+1];
+	struct nla_policy nested_policy[] = {
+		[NESTED_FOO] = {.type = NLA_U32},
+	};
+
+	if (nla_parse_nested(nested, NESTED_MAX, attrs[ATTR_OPTS], nested_policy) &lt; 0)
+		/* &#x9519;&#x8BEF;*/
+
+	if (nested[NESTED_FOO])
+		uint32_t val = nla_get_u32(nested[NESTED_FOO]);
+}
+</code></pre>
+<p><strong>&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x7684;&#x6784;&#x9020;</strong></p>
+<p>&#x5C5E;&#x6027;&#x7684;&#x5D4C;&#x5957;&#x662F;&#x901A;&#x8FC7;&#x5728;&#x4EE3;&#x7801;&#x524D;&#x540E;&#x5206;&#x522B;&#x8C03;&#x7528; <code>nla_nest_start()</code> &#x548C; <code>nla_nest_end()</code> &#x6765;&#x5B8C;&#x6210;&#x7684;&#x3002;
+<code>nla_nest_start()</code> &#x51FD;&#x6570;&#x4F1A;&#x5728;&#x6D88;&#x606F;&#x4E2D;&#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x6CA1;&#x6709;&#x5B9E;&#x9645;&#x8F7D;&#x8377;&#x7684;&#x5C5E;&#x6027;&#x5934;&#x90E8;&#xFF0C;&#x5728;&#x6B64;&#x4E4B;&#x540E;&#x6DFB;&#x52A0;&#x7684;
+&#x6570;&#x636E;&#x90FD;&#x4F1A;&#x6210;&#x4E3A;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x7684;&#x8F7D;&#x8377;&#x90E8;&#x5206;&#x76F4;&#x5230;&#x8C03;&#x7528; <code>nla_nest_end()</code> &#x4E3A;&#x6B62;&#xFF0C;&#x5B83;&#x7684;&#x8C03;&#x7528;&#x201C;&#x5173;&#x95ED;&#x201D;&#x4E86;
+&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x5E76;&#x6821;&#x6B63;&#x5B83;&#x7684;&#x8F7D;&#x8377;&#x957F;&#x5EA6;&#x4EE5;&#x5305;&#x542B;&#x6240;&#x6709;&#x7684;&#x6570;&#x636E;&#x957F;&#x5EA6;&#x3002;</p>
+<pre><code>int put_opts(struct nl_msg *msg)
+{
+	struct nlattr *opts;
+
+	if (!(opts = nla_nest_start(msg, ATTR_OPTS)))
+		goto nla_put_failure;
+
+	NLA_PUT_U32(msg, NESTED_FOO, 123);
+	NLA_PUT_STRING(msg, NESTED_BAR, &quot;some text&quot;);
+
+	nla_nest_end(msg, opts);
+	return 0;
+
+nla_put_failure:
+	nla_nest_cancle(msg, opts);
+	return -EMSGSIZE;
+}
+</code></pre>
+<p></p><h3 id="6-4-5-bu-ding-shu-xing">6.4.5 &#x4E0D;&#x5B9A;&#x5C5E;&#x6027;</h3><p></p>
+<p>&#x8FD9;&#x662F;&#x9ED8;&#x8BA4;&#x7684;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#xFF0C;&#x5B83;&#x5728;&#x6CA1;&#x6709;&#x5408;&#x9002;&#x7684;&#x57FA;&#x672C;&#x6570;&#x636E;&#x7C7B;&#x578B;&#x7684;&#x65F6;&#x5019;&#x4F7F;&#x7528;&#x3002;&#x5B83;&#x7528;&#x6765;&#x8868;&#x793A;&#x4EFB;&#x610F;&#x957F;&#x5EA6;&#x4EFB;&#x610F;
+&#x7C7B;&#x578B;&#x6570;&#x636E;&#x3002;</p>
+<p>&#x5E93;&#x4E2D;&#x5B58;&#x5728;&#x4E00;&#x4E2A;&#x7279;&#x6B8A;&#x7684;&#x63A5;&#x53E3;&#x5141;&#x8BB8;&#x57FA;&#x4E8E; <code>netlink</code> &#x5C5E;&#x6027;&#x5206;&#x914D;&#x62BD;&#x8C61;&#x7684;&#x5730;&#x5740;&#x5BF9;&#x8C61;&#xFF0C;&#x8FD9;&#x4E2A;&#x5BF9;&#x8C61;&#x5305;&#x542B;&#x67D0;&#x79CD;
+&#x5F62;&#x5F0F;&#x7684;&#x7F51;&#x7EDC;&#x5730;&#x5740;&#x3002;&#x8BF7;&#x53C2;&#x8003; <a href="/netlink/2015/02/15/libnl-translation-part9.html#abstract_addr">&#x5730;&#x5740;&#x5206;&#x914D;</a> &#x4E00;&#x8282;&#x4EE5;&#x4FBF;&#x83B7;&#x53D6;&#x66F4;&#x591A;&#x7684;&#x4FE1;&#x606F;&#x3002;</p>
+<p>&#x5173;&#x4E8E;&#x5982;&#x4F55;&#x57FA;&#x4E8E; <code>neltink</code> &#x5C5E;&#x6027;&#x5206;&#x914D;&#x62BD;&#x8C61;&#x6570;&#x636E;&#x5BF9;&#x8C61;&#x7684;&#x66F4;&#x591A;&#x4FE1;&#x606F;&#x8BF7;&#x67E5;&#x770B;
+<a href="/netlink/2015/02/15/libnl-translation-part9.html#abstract_data">&#x62BD;&#x8C61;&#x6570;&#x636E;&#x5206;&#x914D;</a> &#x4E00;&#x8282;&#x3002;</p>
+<p>&#x8FD9;&#x79CD;&#x7C7B;&#x578B;&#x7684;&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>nla_get()</code> &#x548C; <code>nla_put()</code> &#x51FD;&#x6570;&#x6765;&#x83B7;&#x53D6;&#x548C;&#x6784;&#x9020;&#x5C5E;&#x6027;&#x3002;&#x8BF7;&#x67E5;&#x770B;
+<a href="#attr_construct">&#x5C5E;&#x6027;&#x6784;&#x9020;</a> &#x4E00;&#x8282;&#x4E2D;&#x7684;&#x4F8B;&#x5B50;&#x3002;</p>
+<p></p><h2 id="6-5-shi-li-cheng-xu">6.5. &#x793A;&#x4F8B;&#x7A0B;&#x5E8F;</h2><p></p>
+<p></p><h3 id="6-5-1-shi-yong-shu-xing-gou-zao-netlink-xiao-xi">6.5.1. &#x4F7F;&#x7528;&#x5C5E;&#x6027;&#x6784;&#x9020; <code>netlink</code> &#x6D88;&#x606F;</h3><p></p>
+<pre><code>struct nl_msg *build_msg(int ifindex, struct nl_addr *lladdr, int mtu)
+{
+	struct nl_msg *msg;
+	struct nlattr *info, *vlan;
+	struct ifinfomsg ifi = {
+		.ifi_family = AF_INET,
+		.ifi_index = ifindex,
+	};
+
+	/* &#x4F7F;&#x7528;&#x9ED8;&#x8BA4;&#x5927;&#x5C0F;&#x5206;&#x914D;&#x4E00;&#x6761;&#x6D88;&#x606F; */
+	if (!(msg = nlmsg_alloc_simple(RTM_SETLINK, 0)))
+		return NULL;
+
+	/* &#x6DFB;&#x52A0;&#x534F;&#x8BAE;&#x76F8;&#x5173;&#x7684;&#x5934;&#x90E8; (struct ifinfomsg)*/
+	if (nlmsg_append(msg, &amp;ifi, sizeof(ifi), NLMSG_ALIGNTO) &lt; 0)
+		goto nla_put_failure
+
+	/* &#x4F7F;&#x7528;&#x4E00;&#x4E2A; 32 &#x4F4D;&#x6574;&#x578B;&#x7684;&#x5C5E;&#x6027;&#x6765;&#x627F;&#x8F7D; MTU */
+	NLA_PUT_U32(msg, IFLA_MTU, mtu);
+
+	/* &#x4F7F;&#x7528;&#x4E00;&#x4E2A;&#x4E0D;&#x5B9A;&#x7C7B;&#x578B;&#x5C5E;&#x6027;&#x6765;&#x627F;&#x8F7D;&#x94FE;&#x8DEF;&#x5C42;&#x5730;&#x5740; */
+	NLA_PUT_ADDR(msg, IFLA_ADDRESS, lladdr);
+
+	/* &#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x4EE5;&#x4FBF;&#x4F7F;&#x7528;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x6765;&#x627F;&#x8F7D;&#x94FE;&#x8DEF;&#x4FE1;&#x606F; */
+	if (!(info = nla_nest_start(msg, IFLA_LINKINFO)))
+		goto nla_put_failure;
+
+	/* &#x5F80;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x4E2D;&#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x5B57;&#x7B26;&#x4E32;&#x5C5E;&#x6027; */
+	NLA_PUT_STRING(msg, IFLA_INFO_KIND, &quot;vlan&quot;);
+
+	/*
+	 * &#x5728;&#x6253;&#x5F00;&#x7684;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x4E2D;&#x518D;&#x6DFB;&#x52A0;&#x4E00;&#x4E2A;&#x5BB9;&#x5668;&#x7528;&#x6765;&#x643A;&#x5E26;
+	 * vlan &#x76F8;&#x5173;&#x7684;&#x5C5E;&#x6027;
+	 */
+	if (!(vlan = nla_nest_start(msg, IFLA_INFO_DATA)))
+		goto nla_put_failure;
+
+	/* &#x5728;&#x6B64;&#x6DFB;&#x52A0;&#x548C; vlan &#x76F8;&#x5173;&#x7684;&#x4FE1;&#x606F;... */
+
+	/* &#x5B8C;&#x6210; vlan &#x76F8;&#x5173;&#x4FE1;&#x606F;&#x7684;&#x586B;&#x5145;&#x5E76;&#x5173;&#x95ED;&#x7B2C;&#x4E8C;&#x4E2A;&#x5BB9;&#x5668;. */
+	nla_nest_end(msg, vlan);
+
+	/* &#x5B8C;&#x6210; link &#x4FE1;&#x606F;&#x5C5E;&#x6027;&#x7684;&#x5D4C;&#x5957;&#x5E76;&#x5173;&#x95ED;&#x7B2C;&#x4E00;&#x4E2A;&#x5BB9;&#x5668;. */
+	nla_nest_end(msg, info);
+
+	return msg;
+
+nla_put_failure:
+	nlmsg_free(msg);
+	return NULL;
+}
+</code></pre>
+<p></p><h3 id="6-5-2-jie-xi-bao-han-shu-xing-de-netlink-xiao-xi">6.5.2 &#x89E3;&#x6790;&#x5305;&#x542B;&#x5C5E;&#x6027;&#x7684; <code>netlink</code> &#x6D88;&#x606F;</h3><p></p>
+<pre><code>int parse_message(struct nlmsghdr *hdr)
+{
+	/*
+	 * policy &#x5B9A;&#x4E49;&#x4E86;&#x4E24;&#x4E2A;&#x5C5E;&#x6027;: &#x4E00;&#x4E2A; 32 &#x4F4D;&#x6574;&#x6570;&#x548C;&#x4E00;&#x4E2A;&#x7528;&#x6765;&#x8FDB;&#x884C;&#x5C5E;&#x6027;
+	 * &#x5D4C;&#x5957;&#x7684;&#x5BB9;&#x5668;&#x5C5E;&#x6027;&#x3002;
+	 */
+	struct nla_policy attr_policy[] = {
+		[ATTR_FOO] = { .type = NLA_U32 },
+		[ATTR_BAR] = { .type = NLA_NESTED },
+	};
+	struct nlattr *attrs[ATTR_MAX+1];
+	int err;
+
+	/*
+	 * nlmsg_parse() &#x51FD;&#x6570;&#x4F1A;&#x4FDD;&#x8BC1;&#x6D88;&#x606F;&#x7684;&#x6709;&#x6548;&#x8F7D;&#x8377;&#x81F3;&#x5C11;&#x8DB3;&#x591F;&#x5BB9;&#x7EB3;&#x534F;&#x8BAE;&#x5934;&#x90E8;
+	 * (struct my_hdr), &#x9A8C;&#x8BC1;&#x6D88;&#x606F;&#x4E2D;&#x5305;&#x542B;&#x7684;&#x6240;&#x6709;&#x5C5E;&#x6027;&#x7136;&#x540E;&#x628A;&#x5C5E;&#x6027;&#x7684;&#x5934;&#x90E8;&#x6307;&#x9488;
+	 * &#x6309;&#x7167;&#x5C5E;&#x6027;&#x7C7B;&#x578B;&#x5B58;&#x50A8;&#x5728; attrs[] &#x6570;&#x7EC4;&#x4E2D;&#x3002;
+	 */
+	if ((err = nlmsg_parse(hdr, sizeof(struct my_hdr), attrs, ATTR_MAX,
+			       attr_policy)) &lt; 0)
+		goto errout;
+
+	if (attrs[ATTR_FOO]) {
+		/*
+		 * &#x4F60;&#x73B0;&#x5728;&#x53EF;&#x4EE5;&#x5B89;&#x5168;&#x7684;&#x76F4;&#x63A5;&#x8BBF;&#x95EE;&#x5C5E;&#x6027;&#x8F7D;&#x8377;&#x800C;&#x4E0D;&#x7528;&#x8FDB;&#x884C;&#x4EFB;&#x4F55;&#x7684;&#x68C0;&#x67E5;
+		 * &#x56E0;&#x4E3A; nlmsg_parse() &#x51FD;&#x6570;&#x4F1A;&#x4FDD;&#x8BC1; policy &#x5F97;&#x5230;&#x6EE1;&#x8DB3;
+		 */
+		uint32_t foo = nla_get_u32(attrs[ATTR_FOO]);
+	}
+
+	if (attrs[ATTR_BAR]) {
+		struct *nested[NESTED_MAX+1];
+
+		/*
+		 * &#x5D4C;&#x5957;&#x5728;&#x5BB9;&#x5668;&#x4E2D;&#x7684;&#x5C5E;&#x6027;&#x53EF;&#x4EE5;&#x548C;&#x9876;&#x5C42;&#x5C5E;&#x6027;&#x4E00;&#x6837;&#x89E3;&#x6790;&#x3002;
+		 */
+		err = nla_parse_nested(nested, NESTED_MAX, attrs[ATTR_BAR],
+				       nested_policy);
+		if (err &lt; 0)
+			goto errout;
+
+		// &#x5728;&#x6B64;&#x5904;&#x7406;&#x5D4C;&#x5957;&#x5C5E;&#x6027;&#x3002;
+	}
+
+	err = 0;
+errout:
+	return err;
+}
+</code></pre>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>&#x6587;&#x4E2D;&#x5E76;&#x6CA1;&#x6709;&#x8BF4;&#x660E;&#x4E0D;&#x5408;&#x7406;&#x7684;&#x7406;&#x7531;&#xFF0C;&#x6211;&#x7684;&#x7406;&#x89E3;&#x662F;&#x5217;&#x8868;&#x6570;&#x7684;&#x6570;&#x91CF;&#x662F;&#x4E0D;&#x56FA;&#x5B9A;&#x7684;&#xFF0C;&#x4E0D;&#x9002;&#x5408;&#x4F7F;&#x7528;&#x6570;&#x7EC4;&#x3002;&#x3010;&#x8BD1;&#x8005;&#x6CE8;&#x3011; <a href="#fnref1" class="footnote-backref">&#x21A9;</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>&#x539F;&#x6587;&#x4E2D;&#x7684;&#x4F8B;&#x5B50;&#x91CC;&#x9762; <code>MY_ATTR_FOO2</code> &#x5199;&#x6210;&#x4E86; <code>MY_ATTR_FOO1</code> &#x4E2A;&#x4EBA;&#x8BA4;&#x4E3A;&#x662F;&#x7B14;&#x8BEF;&#x3002;&#x3010;&#x8BD1;&#x8005;&#x6CE8;&#x3011; <a href="#fnref2" class="footnote-backref">&#x21A9;</a></p>
+</li>
+</ol>
+</section>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/netlink/" rel="tag"># netlink</a>
+          
+            <a href="/tags/libnl/" rel="tag"># libnl</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/01/31/libnl-translation-part5/" rel="next" title="Netlink 库 -- 官方开发者教程中文版第五部分">
+                <i class="fa fa-chevron-left"></i> Netlink 库 -- 官方开发者教程中文版第五部分
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/02/15/libnl-translation-part7/" rel="prev" title="Netlink 库 -- 官方开发者教程中文版第七部分">
+                Netlink 库 -- 官方开发者教程中文版第七部分 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#6-shu-xing"><span class="nav-number">1.</span> <span class="nav-text">6. 属性</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#6-1-shu-xing-ge-shi"><span class="nav-number">1.1.</span> <span class="nav-text">6.1 属性格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-2-shu-xing-jie-xi"><span class="nav-number">1.2.</span> <span class="nav-text">6.2 属性解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ba-shu-xing-liu-fen-ge-cheng-shu-xing-ji"><span class="nav-number">1.2.1.</span> <span class="nav-text">把属性流分割成属性集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fang-wen-shu-xing-de-tou-bu-he-shu-xing-de-you-xiao-zai-he"><span class="nav-number">1.2.2.</span> <span class="nav-text">访问属性的头部和属性的有效载荷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shu-xing-jian-yan"><span class="nav-number">1.2.3.</span> <span class="nav-text">属性检验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jie-xi-shu-xing-de-bian-jie-fang-shi"><span class="nav-number">1.2.4.</span> <span class="nav-text">解析属性的便捷方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#li-zi"><span class="nav-number">1.2.5.</span> <span class="nav-text">例子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ding-wei-dan-ge-shu-xing"><span class="nav-number">1.2.6.</span> <span class="nav-text">定位单个属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#die-dai-shu-xing-liu"><span class="nav-number">1.2.7.</span> <span class="nav-text">迭代属性流</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-3-shu-xing-de-gou-zao"><span class="nav-number">1.3.</span> <span class="nav-text">6.3. 属性的构造</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ji-yu-yi-chang-de-shu-xing-gou-zao"><span class="nav-number">1.4.</span> <span class="nav-text">基于异常的属性构造</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-4-shu-xing-shu-ju-lei-xing"><span class="nav-number">1.5.</span> <span class="nav-text">6.4. 属性数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-1-zheng-xing-shu-xing"><span class="nav-number">1.5.1.</span> <span class="nav-text">6.4.1. 整型属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-2-zi-fu-chuan-shu-xing"><span class="nav-number">1.5.2.</span> <span class="nav-text">6.4.2. 字符串属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-3-biao-zhi-shu-xing"><span class="nav-number">1.5.3.</span> <span class="nav-text">6.4.3 标志属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-4-qian-tao-shu-xing"><span class="nav-number">1.5.4.</span> <span class="nav-text">6.4.4 嵌套属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-4-5-bu-ding-shu-xing"><span class="nav-number">1.5.5.</span> <span class="nav-text">6.4.5 不定属性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-5-shi-li-cheng-xu"><span class="nav-number">1.6.</span> <span class="nav-text">6.5. 示例程序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-5-1-shi-yong-shu-xing-gou-zao-netlink-xiao-xi"><span class="nav-number">1.6.1.</span> <span class="nav-text">6.5.1. 使用属性构造 netlink 消息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-5-2-jie-xi-bao-han-shu-xing-de-netlink-xiao-xi"><span class="nav-number">1.6.2.</span> <span class="nav-text">6.5.2 解析包含属性的 netlink 消息</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
