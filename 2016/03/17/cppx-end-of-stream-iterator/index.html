@@ -261,7 +261,7 @@
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="郭荣飞">
     <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
+    <meta itemprop="image" content="/img/avatar.jpg">
   </span>
 
   <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -329,20 +329,16 @@
       
 
       
-        <p><code>stream iterator</code> &#x662F;&#x4E00;&#x79CD;&#x795E;&#x5947;&#x7684;&#x8FED;&#x4EE3;&#x5668;&#x9002;&#x914D;&#x5668;&#xFF0C;&#x5B83;&#x8BA9;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>STL</code> &#x7B97;&#x6CD5;&#x64CD;&#x7EB5;&#x8F93;
-&#x5165;&#x8F93;&#x51FA;&#x6D41;&#xFF0C;&#x6BD4;&#x5982;&#x628A; <code>vector</code> &#x4E2D;&#x7684;&#x5185;&#x5BB9;&#x5168;&#x90E8;&#x8F93;&#x51FA;&#xFF0C;&#x53EF;&#x4EE5;&#x7B80;&#x5355;&#x7684;&#x5199;&#x6210;&#x8FD9;&#x6837;&#x3002;</p>
+        <p><code>stream iterator</code> &#x662F;&#x4E00;&#x79CD;&#x795E;&#x5947;&#x7684;&#x8FED;&#x4EE3;&#x5668;&#x9002;&#x914D;&#x5668;&#xFF0C;&#x5B83;&#x8BA9;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x4F7F;&#x7528; <code>STL</code> &#x7B97;&#x6CD5;&#x64CD;&#x7EB5;&#x8F93;&#x5165;&#x8F93;&#x51FA;&#x6D41;&#xFF0C;&#x6BD4;&#x5982;&#x628A; <code>vector</code> &#x4E2D;&#x7684;&#x5185;&#x5BB9;&#x5168;&#x90E8;&#x8F93;&#x51FA;&#xFF0C;&#x53EF;&#x4EE5;&#x7B80;&#x5355;&#x7684;&#x5199;&#x6210;&#x8FD9;&#x6837;&#x3002;</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; coll = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>};</div><div class="line">copy(coll.cbegin(), coll.cend(), ostream_iterator&lt;<span class="keyword">int</span>&gt;(<span class="built_in">cout</span>, <span class="string">&quot; &quot;</span>));</div></pre></td></tr></table></figure>
 <p>&#x5F53;&#x7136;&#x4F60;&#x4E5F;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;&#x8FD9;&#x79CD;&#x65B9;&#x5F0F;&#x5904;&#x7406;&#x8F93;&#x5165;&#xFF0C;&#x6BD4;&#x5982;&#x4ECE;&#x6807;&#x51C6;&#x8F93;&#x5165;&#x4E2D;&#x8F93;&#x5165;&#x5143;&#x7D20;&#x5230; <code>vector</code> &#x4E2D;&#x53BB;&#x3002;</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; coll;</div><div class="line">copy(istream_iterator&lt;<span class="keyword">int</span>&gt;(<span class="built_in">cin</span>),    <span class="comment">// start of source</span></div><div class="line">     istream_iterator&lt;<span class="keyword">int</span>&gt;(),       <span class="comment">// end of source</span></div><div class="line">     back_inserter(coll));          <span class="comment">// destination</span></div></pre></td></tr></table></figure>
 <p><code>istream_iterator</code> &#x8981;&#x6BD4; <code>ostream_iterator</code> &#x96BE;&#x7528;&#x4E00;&#x4E9B;&#xFF0C;&#x56E0;&#x4E3A;&#x4F60;&#x5FC5;&#x987B;&#x8981;&#x4F7F;&#x7528;&#x4E00;&#x4E2A;
-<code>EOF</code> &#x8868;&#x793A;&#x8F93;&#x5165;&#x7684;&#x7ED3;&#x675F;&#xFF0C;&#x8FD9;&#x4E2A;&#x6982;&#x5FF5;&#x53EF;&#x4EE5;&#x7528; <code>istream_iterator</code> &#x7684;&#x9ED8;&#x8BA4;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4EA7;&#x751F;&#x7684;&#x5BF9;
-&#x8C61;&#x8868;&#x793A;&#x3002;&#x4E5F;&#x5C31;&#x662F;&#x4E0A;&#x9762;&#x8FD9;&#x4E2A; <code>istream_iterator&lt;int&gt;()</code>&#x3002;</p>
-<p>&#x8FD9;&#x79CD;&#x8BED;&#x6CD5;&#x770B;&#x8D77;&#x6765;&#x6BD4;&#x8F83;&#x8BE1;&#x5F02;&#xFF0C;&#x6211;&#x5728;&#x770B; &#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>&#x8FD9;&#x672C;&#x4E66;&#x7684;&#x52D8;&#x8BEF;&#x7684;&#x65F6;&#x5019;&#x53D1;&#x73B0;&#x4E86;&#x4E00;&#x79CD;&#x65B0;
-&#x7684;&#x8BED;&#x6CD5;&#xFF0C;&#x76F4;&#x63A5;&#x4F7F;&#x7528;<code>{}</code>&#x3002;</p>
+<code>EOF</code> &#x8868;&#x793A;&#x8F93;&#x5165;&#x7684;&#x7ED3;&#x675F;&#xFF0C;&#x8FD9;&#x4E2A;&#x6982;&#x5FF5;&#x53EF;&#x4EE5;&#x7528; <code>istream_iterator</code> &#x7684;&#x9ED8;&#x8BA4;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4EA7;&#x751F;&#x7684;&#x5BF9;&#x8C61;&#x8868;&#x793A;&#x3002;&#x4E5F;&#x5C31;&#x662F;&#x4E0A;&#x9762;&#x8FD9;&#x4E2A; <code>istream_iterator&lt;int&gt;()</code>&#x3002;</p>
+<p>&#x8FD9;&#x79CD;&#x8BED;&#x6CD5;&#x770B;&#x8D77;&#x6765;&#x6BD4;&#x8F83;&#x8BE1;&#x5F02;&#xFF0C;&#x6211;&#x5728;&#x770B; &#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>&#x8FD9;&#x672C;&#x4E66;&#x7684;&#x52D8;&#x8BEF;&#x7684;&#x65F6;&#x5019;&#x53D1;&#x73B0;&#x4E86;&#x4E00;&#x79CD;&#x65B0;&#x7684;&#x8BED;&#x6CD5;&#xFF0C;&#x76F4;&#x63A5;&#x4F7F;&#x7528;<code>{}</code>&#x3002;</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">copy (istream_iterator&lt;<span class="built_in">string</span>&gt;(<span class="built_in">cin</span>), <span class="comment">// start of source</span></div><div class="line">      {},                            <span class="comment">// end of source</span></div><div class="line">                                     <span class="comment">//(default constructed istream iterator)</span></div><div class="line">      back_inserter(coll));          <span class="comment">// destination</span></div></pre></td></tr></table></figure>
 <p>&#x4E4B;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x8FD9;&#x6837;&#x505A;&#x4E3B;&#x8981;&#x5F52;&#x529F;&#x4E8E; <code>C++11</code> &#x7EDF;&#x4E00;&#x4E86;&#x521D;&#x59CB;&#x5316;&#x8BED;&#x6CD5;&#xFF0C;&#x53EF;&#x4EE5;&#x5728;&#x4EFB;&#x4F55;&#x5730;&#x65B9;&#x4F7F;&#x7528; <code>{}</code>
-&#x6765;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x5728; <code>copy</code> &#x4E2D;&#xFF0C;&#x56E0;&#x4E3A;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x6839;&#x636E;&#x7B2C;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#x63A8;&#x5BFC;&#x51FA;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x7684;&#x7C7B;&#x578B;&#xFF0C;&#x6240;&#x4EE5;
-&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x901A;&#x8FC7; <code>{}</code> &#x6765;&#x8C03;&#x7528;&#x9ED8;&#x8BA4;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x521B;&#x5EFA;&#x4EE3;&#x8868; <code>EOF</code> &#x7684;&#x8FED;&#x4EE3;&#x5668;&#x3002;</p>
+&#x6765;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x5728; <code>copy</code> &#x4E2D;&#xFF0C;&#x56E0;&#x4E3A;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x6839;&#x636E;&#x7B2C;&#x4E00;&#x4E2A;&#x53C2;&#x6570;&#x63A8;&#x5BFC;&#x51FA;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x7684;&#x7C7B;&#x578B;&#xFF0C;&#x6240;&#x4EE5;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x901A;&#x8FC7; <code>{}</code> &#x6765;&#x8C03;&#x7528;&#x9ED8;&#x8BA4;&#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x521B;&#x5EFA;&#x4EE3;&#x8868; <code>EOF</code> &#x7684;&#x8FED;&#x4EE3;&#x5668;&#x3002;</p>
 <p><a href="http://www.cppstdlib.com/errata.html" target="_blank" rel="external">&#x52D8;&#x8BEF;</a>&#x7684;&#x539F;&#x8BDD;&#x5982;&#x4E0B;&#xFF1A;</p>
 <blockquote>
 <p>Note that since C++11, you can pass empty curly braces instead of a default
@@ -350,9 +346,7 @@ constructed stream iterator as the end of the range. This works because the
 type of the argument that defines the end of the range is deduced from the
 previous argument that defines the begin of the range:</p>
 </blockquote>
-<p>&#x53E6;&#x5916;&#x9700;&#x8981;&#x63D0;&#x9192;&#x7684;&#x662F;&#xFF0C;&#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;&#x7684;&#x4E2D;&#x6587;&#x8BD1;&#x672C;&#x5E94;&#x8BE5;&#x662F;&#x57FA;&#x4E8E;&#x7B2C;&#x4E00;&#x6B21;&#x5370;&#x5237;&#x7248;&#x672C;&#x7FFB;&#x8BD1;&#x7684;&#xFF0C;&#x539F;&#x4E66;
-&#x6709;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#xFF0C;&#x5728;&#x82F1;&#x6587;&#x7248;&#x7684;<a href="http://www.cppstdlib.com/errata.html" target="_blank" rel="external">&#x52D8;&#x8BEF;</a>&#x4E2D;&#x6709;&#x4FEE;&#x6B63;&#xFF0C;&#x5927;&#x5BB6;&#x5982;&#x679C;&#x8BFB;&#x8FD9;&#x672C;&#x4E66;&#x5E94;&#x8BE5;&#x5173;&#x6CE8;&#x4E00;&#x4E9B;&#x5B83;&#x7684;
-&#x52D8;&#x8BEF;&#xFF0C;&#x4EE5;&#x514D;&#x88AB;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#x6240;&#x8BEF;&#x5BFC;&#x3002;</p>
+<p>&#x53E6;&#x5916;&#x9700;&#x8981;&#x63D0;&#x9192;&#x7684;&#x662F;&#xFF0C;&#x300A;C++ &#x6807;&#x51C6;&#x5E93;&#x300B;&#x7684;&#x4E2D;&#x6587;&#x8BD1;&#x672C;&#x5E94;&#x8BE5;&#x662F;&#x57FA;&#x4E8E;&#x7B2C;&#x4E00;&#x6B21;&#x5370;&#x5237;&#x7248;&#x672C;&#x7FFB;&#x8BD1;&#x7684;&#xFF0C;&#x539F;&#x4E66;&#x6709;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#xFF0C;&#x5728;&#x82F1;&#x6587;&#x7248;&#x7684;<a href="http://www.cppstdlib.com/errata.html" target="_blank" rel="external">&#x52D8;&#x8BEF;</a>&#x4E2D;&#x6709;&#x4FEE;&#x6B63;&#xFF0C;&#x5927;&#x5BB6;&#x5982;&#x679C;&#x8BFB;&#x8FD9;&#x672C;&#x4E66;&#x5E94;&#x8BE5;&#x5173;&#x6CE8;&#x4E00;&#x4E9B;&#x5B83;&#x7684;&#x52D8;&#x8BEF;&#xFF0C;&#x4EE5;&#x514D;&#x88AB;&#x4E00;&#x4E9B;&#x9519;&#x8BEF;&#x6240;&#x8BEF;&#x5BFC;&#x3002;</p>
 <hr class="footnotes-sep">
 <section class="footnotes">
 <ol class="footnotes-list">
@@ -455,7 +449,7 @@ previous argument that defines the begin of the range:</p>
       <section class="site-overview sidebar-panel sidebar-panel-active">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
-               src="/images/avatar.gif"
+               src="/img/avatar.jpg"
                alt="郭荣飞" />
           <p class="site-author-name" itemprop="name">郭荣飞</p>
           <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
@@ -463,7 +457,7 @@ previous argument that defines the begin of the range:</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">74</span>
+              <span class="site-state-item-count">75</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
