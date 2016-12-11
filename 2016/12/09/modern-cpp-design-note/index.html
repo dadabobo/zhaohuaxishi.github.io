@@ -1,0 +1,636 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP,读书笔记," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="这本书写于2001年，在国内这本书已经绝版了，非常可惜。15年后看这本书，我依旧惊叹于
+作者的技巧，同时也更加深刻的理解什么叫做你永远都走在精通C++的路上。用火吻的话来
+说就是，你什么都不懂。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="读书札记之——《C++设计新思维》">
+<meta property="og:url" content="http://blog.guorongfei.com/2016/12/09/modern-cpp-design-note/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="这本书写于2001年，在国内这本书已经绝版了，非常可惜。15年后看这本书，我依旧惊叹于
+作者的技巧，同时也更加深刻的理解什么叫做你永远都走在精通C++的路上。用火吻的话来
+说就是，你什么都不懂。">
+<meta property="og:updated_time" content="2016-12-09T00:58:16.923Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="读书札记之——《C++设计新思维》">
+<meta name="twitter:description" content="这本书写于2001年，在国内这本书已经绝版了，非常可惜。15年后看这本书，我依旧惊叹于
+作者的技巧，同时也更加深刻的理解什么叫做你永远都走在精通C++的路上。用火吻的话来
+说就是，你什么都不懂。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2016/12/09/modern-cpp-design-note/"/>
+
+
+
+
+
+  <title> 读书札记之——《C++设计新思维》 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2016/12/09/modern-cpp-design-note/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                读书札记之——《C++设计新思维》
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-12-09T08:34:35+08:00">
+                2016-12-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#x8FD9;&#x672C;&#x4E66;&#x5199;&#x4E8E;2001&#x5E74;&#xFF0C;&#x5728;&#x56FD;&#x5185;&#x8FD9;&#x672C;&#x4E66;&#x5DF2;&#x7ECF;&#x7EDD;&#x7248;&#x4E86;&#xFF0C;&#x975E;&#x5E38;&#x53EF;&#x60DC;&#x3002;15&#x5E74;&#x540E;&#x770B;&#x8FD9;&#x672C;&#x4E66;&#xFF0C;&#x6211;&#x4F9D;&#x65E7;&#x60CA;&#x53F9;&#x4E8E;&#x4F5C;&#x8005;&#x7684;&#x6280;&#x5DE7;&#xFF0C;&#x540C;&#x65F6;&#x4E5F;&#x66F4;&#x52A0;&#x6DF1;&#x523B;&#x7684;&#x7406;&#x89E3;&#x4EC0;&#x4E48;&#x53EB;&#x505A;&#x4F60;&#x6C38;&#x8FDC;&#x90FD;&#x8D70;&#x5728;&#x7CBE;&#x901A;C++&#x7684;&#x8DEF;&#x4E0A;&#x3002;&#x7528;&#x706B;&#x543B;&#x7684;&#x8BDD;&#x6765;&#x8BF4;&#x5C31;&#x662F;&#xFF0C;&#x4F60;&#x4EC0;&#x4E48;&#x90FD;&#x4E0D;&#x61C2;&#x3002;</p>
+<a id="more"></a>
+<h1 id="di-gui-zhi-mei">&#x9012;&#x5F52;&#x4E4B;&#x7F8E;</h1>
+<p>&#x8FD9;&#x672C;&#x4E66;&#x91CC;&#x9762;&#x7684;&#x5927;&#x90E8;&#x5206;&#x7684;&#x5185;&#x5BB9;&#x8BBE;&#x8BA1;&#x6A21;&#x677F;&#x5143;&#x7F16;&#x7A0B;&#xFF0C;&#x800C;&#x5B83;&#x7684;&#x57FA;&#x77F3;&#x5C31;&#x662F;&#x9012;&#x5F52;&#x3002;&#x5F88;&#x4E45;&#x4EE5;&#x524D;&#x770B;&#x5230;&#x8FC7;&#x522B;&#x4EBA;&#x8BF4;&#x80FD;&#x7528;&#x9012;&#x5F52;&#x5199;&#x51FA;&#x7684;&#x6765;&#x7684;&#x7A0B;&#x5E8F;&#x5C3D;&#x91CF;&#x7528;&#x9012;&#x5F52;&#x6765;&#x5199;&#xFF0C;&#x90A3;&#x65F6;&#x5019;&#x8FD8;&#x6C89;&#x8FF7;&#x4E8E;C&#x8BED;&#x8A00;&#x7684;&#x9AD8;&#x6548;&#x6027;&#x7684;&#x6211;&#x5BF9;&#x8FD9;&#x79CD;&#x89C2;&#x70B9;&#x55E4;&#x4E4B;&#x4EE5;&#x9F3B;&#xFF0C;&#x73B0;&#x5728;&#x60F3;&#x60F3;&#x662F;&#x81EA;&#x5DF1;&#x65E0;&#x77E5;&#x3002;</p>
+<p>&#x6570;&#x5B66;&#x4E2D;&#x975E;&#x5E38;&#x4F1F;&#x5927;&#x7684;&#x4E00;&#x79CD;&#x6982;&#x5FF5;&#x53EB;&#x505A;&#x5F52;&#x7EB3;&#xFF0C;&#x56E0;&#x4E3A;&#x5B83;&#x53EF;&#x4EE5;&#x7528;&#x6709;&#x9650;&#x6765;&#x8868;&#x8FBE;&#x65E0;&#x9650;&#xFF0C;&#x800C;&#x5728;&#x8BA1;&#x7B97;&#x673A;&#x7684;&#x4E16;&#x754C;&#xFF0C;&#x8FD9;&#x79CD;&#x6982;&#x5FF5;&#x5BF9;&#x5E94;&#x7684;&#x5C31;&#x662F;&#x9012;&#x5F52;&#xFF0C;&#x867D;&#x7136;&#x9012;&#x5F52;&#x65E0;&#x6CD5;&#x65E0;&#x9650;&#x4E0B;&#x53BB;&#x3002;&#x9012;&#x5F52;&#x5199;&#x51FA;&#x7684;&#x6765;&#x7684;&#x7B97;&#x6CD5;&#x901A;&#x5E38;&#x662F;&#x6BD4;&#x8F83;&#x5BB9;&#x6613;&#x8BC1;&#x660E;&#x5B83;&#x7684;&#x6B63;&#x786E;&#x6027;&#x7684;&#xFF0C;&#x56E0;&#x4E3A;&#x4F60;&#x6709;&#x6570;&#x5B66;&#x7684;&#x57FA;&#x77F3;&#x3002;</p>
+<p>&#x8FD9;&#x672C;&#x4E66;&#x91CC;&#x9762;&#x5927;&#x91CF;&#x7684;&#x7528;&#x5230;&#x4E86;&#x9012;&#x5F52;&#x7684;&#x601D;&#x7EF4;&#xFF0C;&#x8BA9;&#x7F16;&#x8BD1;&#x5668;&#x81EA;&#x52A8;&#x66FF;&#x6211;&#x4EEC;&#x751F;&#x6210;&#x4EE3;&#x7801;&#xFF0C;&#x8BA9;&#x6211;&#x4EEC;&#x80FD;&#x591F;&#x517C;&#x5F97;&#x9AD8;&#x6548;&#x548C;&#x4F18;&#x96C5;&#x3002;</p>
+<h1 id="she-ji-mo-shi">&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;</h1>
+<p>&#x6211;&#x4E4B;&#x524D;&#x8BA4;&#x771F;&#x7684;&#x8BFB;&#x8FC7;&#x300A;GoF&#x300B;&#xFF0C;&#x81EA;&#x4EE5;&#x4E3A;&#x5BF9;&#x4E8E;&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;&#x7684;&#x7406;&#x89E3;&#x5E94;&#x8BE5;&#x6BD4;&#x8F83;&#x5230;&#x4F4D;&#xFF0C;&#x4F46;&#x662F;&#x8BFB;&#x5B8C;&#x8FD9;&#x672C;&#x4E66;&#x4E4B;&#x540E;&#x53D1;&#x73B0;&#xFF0C;&#x539F;&#x6765;&#x6211;&#x5F88;&#x591A;&#x4E1C;&#x897F;&#x8FD8;&#x662F;&#x4E00;&#x77E5;&#x534A;&#x89E3;&#x3002;&#x8FD9;&#x4E0D;&#x4EC5;&#x4EC5;&#x662F;&#x4E00;&#x672C;&#x6A21;&#x677F;&#x9B54;&#x6CD5;&#x4E66;&#xFF0C;&#x5B83;&#x4E5F;&#x662F;&#x4E00;&#x672C;&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;&#x7684;&#x8FDB;&#x9636;&#x6307;&#x5357;&#x3002;</p>
+<p>&#x4EE5;&#x524D;&#x6211;&#x4E00;&#x76F4;&#x8BA4;&#x4E3A;&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;&#x53EA;&#x80FD;&#x7528;&#x6307;&#x9488;&#x6765;&#x5B9E;&#x73B0;&#xFF0C;&#x73B0;&#x5728;&#x60F3;&#x60F3;&#x81EA;&#x5DF1;&#x771F;&#x7684;&#x4EC0;&#x4E48;&#x90FD;&#x4E0D;&#x61C2;&#x3002;</p>
+<h1 id="zong-jie">&#x603B;&#x7ED3;</h1>
+<p>&#x5982;&#x679C;&#x4F60;&#x60F3;&#x4E86;&#x89E3;C++11&#x4E2D;&#x7684;&#x9ED1;&#x9B54;&#x6CD5;&#x7684;&#x5B9E;&#x73B0;&#x65B9;&#x5F0F;&#xFF0C;&#x8BF7;&#x770B;&#x8FD9;&#x672C;&#x4E66;&#x3002;</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+            <a href="/tags/读书笔记/" rel="tag"># 读书笔记</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/08/cpp-code-standards-note/" rel="next" title="读书札记只——《C++编程规范》">
+                <i class="fa fa-chevron-left"></i> 读书札记只——《C++编程规范》
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/img/avatar.jpg"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">78</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#di-gui-zhi-mei"><span class="nav-number">1.</span> <span class="nav-text">递归之美</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#she-ji-mo-shi"><span class="nav-number">2.</span> <span class="nav-text">设计模式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zong-jie"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

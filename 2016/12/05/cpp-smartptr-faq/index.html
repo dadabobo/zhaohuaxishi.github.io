@@ -1,0 +1,644 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="C++ 之父说 C++11 像是一门新的语言，很大一部分得益于标准库在 C++11 中的重要扩充，
+而新的智能指针属于其中至关重要的一点。新的智能指针shared_ptr和unique_ptr比起
+auto_ptr要好用很多，但是依旧存在一些比较容易踩坑的地方，本文罗列了
+stackoverflow 上关于智能指针的一些常见问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 智能指针的常见问题">
+<meta property="og:url" content="http://blog.guorongfei.com/2016/12/05/cpp-smartptr-faq/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="C++ 之父说 C++11 像是一门新的语言，很大一部分得益于标准库在 C++11 中的重要扩充，
+而新的智能指针属于其中至关重要的一点。新的智能指针shared_ptr和unique_ptr比起
+auto_ptr要好用很多，但是依旧存在一些比较容易踩坑的地方，本文罗列了
+stackoverflow 上关于智能指针的一些常见问题。">
+<meta property="og:updated_time" content="2016-12-08T00:47:20.105Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++11 智能指针的常见问题">
+<meta name="twitter:description" content="C++ 之父说 C++11 像是一门新的语言，很大一部分得益于标准库在 C++11 中的重要扩充，
+而新的智能指针属于其中至关重要的一点。新的智能指针shared_ptr和unique_ptr比起
+auto_ptr要好用很多，但是依旧存在一些比较容易踩坑的地方，本文罗列了
+stackoverflow 上关于智能指针的一些常见问题。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2016/12/05/cpp-smartptr-faq/"/>
+
+
+
+
+
+  <title> C++11 智能指针的常见问题 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2016/12/05/cpp-smartptr-faq/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                C++11 智能指针的常见问题
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-12-05T13:13:30+08:00">
+                2016-12-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>C++ &#x4E4B;&#x7236;&#x8BF4; C++11 &#x50CF;&#x662F;&#x4E00;&#x95E8;&#x65B0;&#x7684;&#x8BED;&#x8A00;&#xFF0C;&#x5F88;&#x5927;&#x4E00;&#x90E8;&#x5206;&#x5F97;&#x76CA;&#x4E8E;&#x6807;&#x51C6;&#x5E93;&#x5728; C++11 &#x4E2D;&#x7684;&#x91CD;&#x8981;&#x6269;&#x5145;&#xFF0C;&#x800C;&#x65B0;&#x7684;&#x667A;&#x80FD;&#x6307;&#x9488;&#x5C5E;&#x4E8E;&#x5176;&#x4E2D;&#x81F3;&#x5173;&#x91CD;&#x8981;&#x7684;&#x4E00;&#x70B9;&#x3002;&#x65B0;&#x7684;&#x667A;&#x80FD;&#x6307;&#x9488;<code>shared_ptr</code>&#x548C;<code>unique_ptr</code>&#x6BD4;&#x8D77;
+<code>auto_ptr</code>&#x8981;&#x597D;&#x7528;&#x5F88;&#x591A;&#xFF0C;&#x4F46;&#x662F;&#x4F9D;&#x65E7;&#x5B58;&#x5728;&#x4E00;&#x4E9B;&#x6BD4;&#x8F83;&#x5BB9;&#x6613;&#x8E29;&#x5751;&#x7684;&#x5730;&#x65B9;&#xFF0C;&#x672C;&#x6587;&#x7F57;&#x5217;&#x4E86;
+stackoverflow &#x4E0A;&#x5173;&#x4E8E;&#x667A;&#x80FD;&#x6307;&#x9488;&#x7684;&#x4E00;&#x4E9B;&#x5E38;&#x89C1;&#x95EE;&#x9898;&#x3002;</p>
+<a id="more"></a>
+<h1 id="shi-yong-shared-ptr-huan-shi-unique-ptr">&#x4F7F;&#x7528; shared_ptr &#x8FD8;&#x662F; unique_ptr</h1>
+<h1 id="duo-ji-cheng-he-zhi-neng-zhi-zhen">&#x591A;&#x7EE7;&#x627F;&#x548C;&#x667A;&#x80FD;&#x6307;&#x9488;</h1>
+<p><a href="http://stackoverflow.com/questions/23872910/using-shared-ptr-with-multi-inheritance-class" target="_blank" rel="external">Using shared_ptr with multi inheritance class</a></p>
+<h1 id="zhi-xiang-this-de-zhi-neng-zhi-zhen">&#x6307;&#x5411; this &#x7684;&#x667A;&#x80FD;&#x6307;&#x9488;</h1>
+<p>[std::shared_ptr of this][this]
+[this]: <a href="http://stackoverflow.com/questions/11711034/stdshared-ptr-of-this" target="_blank" rel="external">http://stackoverflow.com/questions/11711034/stdshared-ptr-of-this</a></p>
+<h1 id="wei-shi-me-ku-zhong-bi-jiao-shao-yong-zhi-neng-zhi-zhen">&#x4E3A;&#x4EC0;&#x4E48;&#x5E93;&#x4E2D;&#x6BD4;&#x8F83;&#x5C11;&#x7528;&#x667A;&#x80FD;&#x6307;&#x9488;</h1>
+<p>[Why do C++ libraries and frameworks never use smart pointers?][not-in-lib]
+[not-in-lib]: <a href="http://stackoverflow.com/questions/10334511/why-do-c-libraries-and-frameworks-never-use-smart-pointers" target="_blank" rel="external">http://stackoverflow.com/questions/10334511/why-do-c-libraries-and-frameworks-never-use-smart-pointers</a></p>
+<h1 id="unique-ptr-wu-fa-shi-yong-lei-de-qian-zhui-sheng-ming">unique_ptr &#x65E0;&#x6CD5;&#x4F7F;&#x7528;&#x7C7B;&#x7684;&#x524D;&#x7F00;&#x58F0;&#x660E;</h1>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/03/vim-ultisnipt-google-c-cpp-header-gurad/" rel="next" title="使用 vim 的 UltiSnips 插件生成符合 google 规范的头文件保护宏">
+                <i class="fa fa-chevron-left"></i> 使用 vim 的 UltiSnips 插件生成符合 google 规范的头文件保护宏
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/08/cpp-code-standards-note/" rel="prev" title="读书札记只——《C++编程规范》">
+                读书札记只——《C++编程规范》 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/img/avatar.jpg"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">78</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#shi-yong-shared-ptr-huan-shi-unique-ptr"><span class="nav-number">1.</span> <span class="nav-text">使用 shared_ptr 还是 unique_ptr</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#duo-ji-cheng-he-zhi-neng-zhi-zhen"><span class="nav-number">2.</span> <span class="nav-text">多继承和智能指针</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zhi-xiang-this-de-zhi-neng-zhi-zhen"><span class="nav-number">3.</span> <span class="nav-text">指向 this 的智能指针</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#wei-shi-me-ku-zhong-bi-jiao-shao-yong-zhi-neng-zhi-zhen"><span class="nav-number">4.</span> <span class="nav-text">为什么库中比较少用智能指针</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#unique-ptr-wu-fa-shi-yong-lei-de-qian-zhui-sheng-ming"><span class="nav-number">5.</span> <span class="nav-text">unique_ptr 无法使用类的前缀声明</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

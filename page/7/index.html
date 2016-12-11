@@ -257,6 +257,393 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/02/15/libnl-translation-part7/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2015/02/15/libnl-translation-part7/" itemprop="url">
+                  Netlink 库 -- 官方开发者教程中文版第七部分
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-02-15T00:00:00+08:00">
+                2015-02-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <H1 id = "callback_config">7. 回调配置</H1>
+<p>为了控制一些函数的行为， <code>libnl</code> 库在许多地方都设置了回调函数挂钩点并允许某些函数
+的覆写。所有的回调和覆写函数都是封装在 <code>struct nl_cb</code> 结构体中，这个结构存在于
+<code>netlink</code> 套接字中或者作为函数的参数直接传递。</p>
+          <!--noindex-->
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/02/15/libnl-translation-part7/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/02/12/libnl-translation-part6/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2015/02/12/libnl-translation-part6/" itemprop="url">
+                  Netlink 库 -- 官方开发者教程中文版第六部分
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-02-12T00:00:00+08:00">
+                2015-02-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <H1 id = "attributes">6. 属性</H1>
+<p>如果可能的话，无论什么时候你都应该把 <code>netlink</code> 消息的有效载荷编码成 <code>netlink</code> 属
+性。使用属性可以使得日后对任何 <code>netlink</code> 协议进行扩展的时候都不会破坏它的二进制
+兼容性。比如：假设你的设备现在可能使用一个 32 位的计数器来统计数据，但是几年后设
+备改成维护一个 64 位的计数器来记录更快的网络硬件。如果你的协议使用了属性，那么过
+度到 64 位计数器是一个非常简单的事情，你只是需要发送一个新的属性来包含这个 64 位
+的变量，与此同时仍然提供旧的 32 位的计数器。如果你的协议没有使用属性的话，你将无
+法在不祸及已有的协议使用者的前提下转化这个数据类型。</p>
+<p>属性嵌套的概念也允许你的协议的子系统实现和维护自己的属性模式。假如现在引入了新一
+代的网络设备，而它需要设置一系列的协议设计之初没有考虑到的新的配置选项。通过使用
+属性，新一代的设备可以定义一个新的属性然后用自己的子属性结构来填充这个属性，这些
+子属性可以扩展甚至是完全废弃原来的属性。</p>
+<p>所以，请<em>始终</em>使用属性，即便是在你几乎可以肯定你的消息格式永远都不会改变的情况下
+也是如此。</p>
+          <!--noindex-->
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/02/12/libnl-translation-part6/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/01/31/libnl-translation-part5/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2015/01/31/libnl-translation-part5/" itemprop="url">
+                  Netlink 库 -- 官方开发者教程中文版第五部分
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2015-01-31T00:00:00+08:00">
+                2015-01-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <H1 id = "message_parse_construct">5. 消息的解析和构建</H1>
+<p><H2 id = "msg_formate">5.1 消息格式</H2></p>
+<p>关于 <code>netlink</code> 协议以及它的消息格式请查看 <a href="/netlink/2015/01/23/libnl-translation-part2.html#nlp_fundamentals">netlink 协议基础</a> 一
+节。</p>
+<p><H3>对齐</H3></p>
+<p>大部分的 <code>netlink</code> 协议对所有的边界都有严格的对齐方案。对齐值是由
+<code>NLMSG_ALIGNTO</code> 定义的，这个值固定为 4 个字节。所以所有的 <code>netlink</code> 消息头部、有
+效载荷段的开头、协议相关头部和属性段都必须从一个是 <code>NLMSG_ALIGNTO</code> 倍数的偏移量
+开始。</p>
+          <!--noindex-->
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/01/31/libnl-translation-part5/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2015/01/27/libnl-translation-part4/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1135,397 +1522,6 @@ socket 文件描述符，并把客户端的地址放入到 <code>client_addr</co
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2014/10/24/socket-bind/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="郭荣飞">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/img/avatar.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="时习之">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="时习之" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2014/10/24/socket-bind/" itemprop="url">
-                  socket API 实现（二）—— bind 函数
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2014-10-24T00:00:00+08:00">
-                2014-10-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><strong>注：本文基于 2.6.32 版本的内核</strong></p>
-<h1>概述</h1>
-<p><a href="/2014/10/23/socket-create" title="socket API 实现（一） —— socket 函数 "><strong>上一篇</strong></a> 文章中说明了使用 <code>socket()</code> 函数创建一个 socket 在内核中
-的处理流程。再经过一些来到处理之后，返回 socket 的文件描述符。通常应用程序下一步
-调用的函数就是 <code>bind()</code>
-比如：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">bind(server_fd, (<span class="keyword">struct</span> sockaddr*)&amp;server_address, server_len);</div></pre></td></tr></table></figure>
-<p>那么这一条语句在内核中到处理又是如何呢？我们将在这篇博文中进行分析。和上一篇文章
-一样，这篇文章不打算过多的分析代码，而是从总体结构上给出一个较为宏观的图解分析。</p>
-          <!--noindex-->
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2014/10/24/socket-bind/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2014/10/23/socket-create/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="郭荣飞">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/img/avatar.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="时习之">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="时习之" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2014/10/23/socket-create/" itemprop="url">
-                  socket API 实现（一）—— socket 函数
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2014-10-23T00:00:00+08:00">
-                2014-10-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><strong>注：文中使用到内核版本是 2.6.32.63，其他版本可能会有些许出入</strong></p>
-<h1>概述</h1>
-<p>如果我们在应用程序中创建一个 socket，我们一般使用类似下面这样的语句：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tcp_scokt = socket(AF_INET, SOCK_STREAM, <span class="number">0</span>);</div></pre></td></tr></table></figure>
-<p>那么这条语句在内核的内部到底做了什么呢？这一类到文章和书籍已经非常的多，讲解的也
-非常的透彻，所以这篇文章并不想讲解过多的代码，如果你需要了解具体的代码，可以查看
-我给出的参考链接<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup><sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>。</p>
-          <!--noindex-->
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2014/10/23/socket-create/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2014/10/22/socket-filesystem/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="郭荣飞">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/img/avatar.jpg">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="时习之">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="时习之" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2014/10/22/socket-filesystem/" itemprop="url">
-                  socket API 实现（零）—— 文件系统注册
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2014-10-22T00:00:00+08:00">
-                2014-10-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><strong>注：本文中的源码是 2.6.32.63。在 2.6.39 中已经废弃了 <code>get_sb</code> 函数，取而代之的
-是 <code>mount</code> 函数，这两函数的原型有些许差别，不过对于本文的主题在逻辑上来说没有太
-多的区别。</strong></p>
-<h1>socket 的概念</h1>
-<h2>接口</h2>
-<p>socket 的使用非常的广泛，中文一般翻译成“套接字”。那么 socket 到底是什么东西呢？
-下面这段话是从 <code>man 7 socket</code> 中摘录下来的：</p>
-<blockquote>
-<p>The BSD compatible sockets are the uniforminterface between the user process
-and the network protocol stacks in the kernel.</p>
-</blockquote>
-<p>翻译成中文：</p>
-<blockquote>
-<p>和 BSD 兼容的 sockets 是用户进程和内核网络协议栈之间的统一接口。</p>
-</blockquote>
-          <!--noindex-->
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2014/10/22/socket-filesystem/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1571,7 +1567,7 @@ and the network protocol stacks in the kernel.</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">75</span>
+              <span class="site-state-item-count">78</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1581,7 +1577,7 @@ and the network protocol stacks in the kernel.</p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-count">21</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
