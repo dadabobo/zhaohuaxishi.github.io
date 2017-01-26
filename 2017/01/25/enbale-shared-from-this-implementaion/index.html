@@ -1,0 +1,673 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="C/CPP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="本文除 boost 源码以外，大部分源码都是伪代码，为了能够更清晰的理解问题，去掉了
+模板相关的内容。文中很多地方直接使用了 sp 一词表示 shared_ptr
+使用智能指针难以避免的场景之一就是需要把 this 当成一个 shared_ptr 传递到其他函数
+中去。比如你的类实现了某个接口，而你需要把自己注册为该接口的实现。你不能简单粗暴
+的用 this 指针构造一个 shared_ptr，因">
+<meta property="og:type" content="article">
+<meta property="og:title" content="enable_shared_from_this 的使用及实现原理">
+<meta property="og:url" content="http://blog.guorongfei.com/2017/01/25/enbale-shared-from-this-implementaion/index.html">
+<meta property="og:site_name" content="时习之">
+<meta property="og:description" content="本文除 boost 源码以外，大部分源码都是伪代码，为了能够更清晰的理解问题，去掉了
+模板相关的内容。文中很多地方直接使用了 sp 一词表示 shared_ptr
+使用智能指针难以避免的场景之一就是需要把 this 当成一个 shared_ptr 传递到其他函数
+中去。比如你的类实现了某个接口，而你需要把自己注册为该接口的实现。你不能简单粗暴
+的用 this 指针构造一个 shared_ptr，因">
+<meta property="og:updated_time" content="2017-01-26T13:54:44.485Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="enable_shared_from_this 的使用及实现原理">
+<meta name="twitter:description" content="本文除 boost 源码以外，大部分源码都是伪代码，为了能够更清晰的理解问题，去掉了
+模板相关的内容。文中很多地方直接使用了 sp 一词表示 shared_ptr
+使用智能指针难以避免的场景之一就是需要把 this 当成一个 shared_ptr 传递到其他函数
+中去。比如你的类实现了某个接口，而你需要把自己注册为该接口的实现。你不能简单粗暴
+的用 this 指针构造一个 shared_ptr，因">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.guorongfei.com/2017/01/25/enbale-shared-from-this-implementaion/"/>
+
+
+
+
+
+  <title> enable_shared_from_this 的使用及实现原理 | 时习之 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">时习之</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">学而时习之，不亦说乎</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.guorongfei.com/2017/01/25/enbale-shared-from-this-implementaion/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="郭荣飞">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/img/avatar.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="时习之">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="时习之" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                enable_shared_from_this 的使用及实现原理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-25T22:36:02+08:00">
+                2017-01-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>&#x672C;&#x6587;&#x9664; boost &#x6E90;&#x7801;&#x4EE5;&#x5916;&#xFF0C;&#x5927;&#x90E8;&#x5206;&#x6E90;&#x7801;&#x90FD;&#x662F;&#x4F2A;&#x4EE3;&#x7801;&#xFF0C;&#x4E3A;&#x4E86;&#x80FD;&#x591F;&#x66F4;&#x6E05;&#x6670;&#x7684;&#x7406;&#x89E3;&#x95EE;&#x9898;&#xFF0C;&#x53BB;&#x6389;&#x4E86;&#x6A21;&#x677F;&#x76F8;&#x5173;&#x7684;&#x5185;&#x5BB9;&#x3002;&#x6587;&#x4E2D;&#x5F88;&#x591A;&#x5730;&#x65B9;&#x76F4;&#x63A5;&#x4F7F;&#x7528;&#x4E86; sp &#x4E00;&#x8BCD;&#x8868;&#x793A; shared_ptr</strong></p>
+<p>&#x4F7F;&#x7528;&#x667A;&#x80FD;&#x6307;&#x9488;&#x96BE;&#x4EE5;&#x907F;&#x514D;&#x7684;&#x573A;&#x666F;&#x4E4B;&#x4E00;&#x5C31;&#x662F;&#x9700;&#x8981;&#x628A; this &#x5F53;&#x6210;&#x4E00;&#x4E2A; shared_ptr &#x4F20;&#x9012;&#x5230;&#x5176;&#x4ED6;&#x51FD;&#x6570;&#x4E2D;&#x53BB;&#x3002;&#x6BD4;&#x5982;&#x4F60;&#x7684;&#x7C7B;&#x5B9E;&#x73B0;&#x4E86;&#x67D0;&#x4E2A;&#x63A5;&#x53E3;&#xFF0C;&#x800C;&#x4F60;&#x9700;&#x8981;&#x628A;&#x81EA;&#x5DF1;&#x6CE8;&#x518C;&#x4E3A;&#x8BE5;&#x63A5;&#x53E3;&#x7684;&#x5B9E;&#x73B0;&#x3002;&#x4F60;&#x4E0D;&#x80FD;&#x7B80;&#x5355;&#x7C97;&#x66B4;&#x7684;&#x7528; this &#x6307;&#x9488;&#x6784;&#x9020;&#x4E00;&#x4E2A; shared_ptr&#xFF0C;&#x56E0;&#x4E3A;&#x90A3;&#x6837;&#x505A;&#x4F1A;&#x5BFC;&#x81F4;&#x4E24;&#x4E2A;&#x72EC;&#x7ACB;&#x7684; shared_ptr &#x6307;&#x5411;&#x540C;&#x4E00;&#x4EFD;&#x8D44;&#x6E90;&#xFF0C;&#x8FD9;&#x5BF9;&#x4E8E;&#x57FA;&#x4E8E;&#x5F15;&#x7528;&#x8BA1;&#x6570;&#x7684; shared_ptr &#x6765;&#x8BF4;&#x662F;&#x81F4;&#x547D;&#x7684;&#x3002;&#x6BD4;&#x5982;&#x4E0B;&#x9762;&#x7684;&#x4EE3;&#x7801;&#x3002;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Widget {</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Widget&gt; GetPtr() {</div><div class="line">        <span class="keyword">return</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt;(<span class="keyword">this</span>);     <span class="comment">// &#x9519;&#x8BEF;</span></div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>{</div><div class="line">    <span class="keyword">auto</span> widget = <span class="built_in">std</span>::make_shared&lt;Widget&gt;();</div><div class="line">    widget-&gt;GetPtr();</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x6B63;&#x786E;&#x7684;&#x6253;&#x5F00;&#x65B9;&#x5F0F;&#x662F;&#x7EE7;&#x627F;&#x6765;&#x81EA; std::enable_shared_from_this&#xFF0C;&#x7136;&#x540E;&#x8C03;&#x7528;&#x5B83;&#x7684;
+shared_from_this &#x6210;&#x5458;&#x51FD;&#x6570;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Widget : <span class="built_in">std</span>::enable_shared_from_this&lt;Widget&gt; {</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Widget&gt; GetPtr() {</div><div class="line">        <span class="keyword">return</span> shared_from_this();</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>{</div><div class="line">    <span class="keyword">auto</span> widget = <span class="built_in">std</span>::make_shared&lt;Widget&gt;();</div><div class="line">    btn-&gt;GetPtr();</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x628A;&#x81EA;&#x5DF1;&#x4F5C;&#x4E3A;&#x57FA;&#x7C7B;&#x7684;&#x6A21;&#x677F;&#x53C2;&#x6570;&#x770B;&#x8D77;&#x6765;&#x975E;&#x5E38;&#x8BE1;&#x5F02;&#xFF0C;&#x5B83;&#x6709;&#x4E00;&#x4E2A;&#x66F4;&#x8BE1;&#x5F02;&#x7684;&#x540D;&#x5B57;&#x2014;&#x2014;&#x5947;&#x5F02;&#x9012;&#x5F52;&#x6A21;&#x677F;&#x6A21;&#x5F0F;&#x3002;&#x5173;&#x4E8E;&#x5B83;&#x7684;&#x4F7F;&#x7528;&#x8FD9;&#x91CC;&#x4E0D;&#x8FC7;&#x591A;&#x7684;&#x4ECB;&#x7ECD;&#xFF0C;&#x6709;&#x5174;&#x8DA3;&#x7684;&#x540C;&#x5B66;&#x53EF;&#x4EE5;&#x53C2;&#x8003;&#x300A;More Effective C++&#x300B;&#xFF0C;&#x300A;C++
+Templates&#x300B;&#x7B49;&#x4E66;&#x7C4D;&#x3002;&#x8FD9;&#x91CC;&#x4E3B;&#x8981;&#x63A2;&#x8BA8;&#x7684;&#x662F;&#x5B83;&#x662F;&#x5982;&#x4F55;&#x5B9E;&#x73B0;&#x8FD4;&#x56DE;&#x81EA;&#x8EAB;&#x7684;&#x667A;&#x80FD;&#x6307;&#x9488;&#x7684;&#x3002;</p>
+<a id="more"></a>
+<h1 id="bi-mian-duo-ge-du-li-de-shared-ptr-zhi-xiang-tong-yi-fen-zi-yuan">&#x907F;&#x514D;&#x591A;&#x4E2A;&#x72EC;&#x7ACB;&#x7684; shared_ptr &#x6307;&#x5411;&#x540C;&#x4E00;&#x4EFD;&#x8D44;&#x6E90;</h1>
+<p>&#x5728;&#x4E4B;&#x524D;&#x7684;&#x9519;&#x8BEF;&#x4EE3;&#x7801;&#x4E2D;&#xFF0C;&#x6709;&#x4E24;&#x4E2A;&#x72EC;&#x7ACB;&#x7684; shared_ptr &#x6307;&#x5411;&#x540C;&#x4E00;&#x5757;&#x7A7A;&#x95F4;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">shared_ptr</span>&lt;Widget&gt;(<span class="keyword">this</span>);   <span class="comment">// &#x6210;&#x5458;&#x51FD;&#x6570;&#x4E2D;</span></div><div class="line"><span class="built_in">std</span>::make_shared&lt;Widget&gt;(); <span class="comment">// main &#x51FD;&#x6570;&#x4E2D;</span></div></pre></td></tr></table></figure>
+<p>&#x5F88;&#x663E;&#x7136; <code>main</code> &#x51FD;&#x6570;&#x4E2D;&#x8FD9;&#x8FD9;&#x4E2A; shared_ptr &#x5FC5;&#x4E0D;&#x53EF;&#x5C11;&#xFF0C;&#x6240;&#x4EE5;&#x6211;&#x4EEC;&#x53EA;&#x80FD;&#x53BB;&#x6389;
+<code>shared_ptr&lt;Widget&gt;(this)</code> &#x800C;&#x8BA9;&#x5B83;&#x5171;&#x4EAB; main &#x51FD;&#x6570;&#x4E2D;&#x521B;&#x5EFA;&#x7684;&#x8FD9;&#x4E2A; shared_ptr&#x3002;</p>
+<h1 id="ru-he-gong-xiang-make-shared-de-fan-hui-de-zi-yuan">&#x5982;&#x4F55;&#x5171;&#x4EAB; make_shared &#x7684;&#x8FD4;&#x56DE;&#x7684;&#x8D44;&#x6E90;</h1>
+<p>&#x5B9E;&#x9645;&#x4E0A;&#xFF0C;&#x629B;&#x5F00;&#x4E00;&#x5207;&#x6765;&#x8BB2;&#xFF0C;&#x6211;&#x4EEC;&#x60F3;&#x8981;&#x7684;&#x4E0D;&#x662F;&#x57FA;&#x4E8E; this &#x53BB;&#x521B;&#x5EFA;&#x4E00;&#x4E2A; shared_ptr<widget>&#xFF0C;&#x800C;&#x662F;&#x5E0C;&#x671B; this &#x7684;&#x7C7B;&#x578B;&#x5C31;&#x662F; shared_ptr<widget>&#x3002;&#x60F3;&#x901A;&#x4E86;&#x8FD9;&#x4E00;&#x70B9;&#x4F60;&#x5C31;&#x4F1A;&#x53D1;&#x73B0;&#xFF0C;&#x5176;&#x5B9E;&#x6211;&#x4EEC;&#x5E94;&#x8BE5;&#x4ECE; shared_ptr &#x7C7B;&#x5165;&#x624B;&#xFF0C;&#x800C;&#x4E0D;&#x662F; Widget &#x7C7B;&#xFF0C;&#x56E0;&#x4E3A;&#x53EA;&#x6709; shared_ptr &#x7C7B;&#x4E2D; this &#x7684;&#x7C7B;&#x578B;&#x624D;&#x662F;
+shared_ptr&#x3002;</widget></widget></p>
+<p>make_shared &#x4F1A;&#x8C03;&#x7528; shared_ptr &#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#xFF0C;&#x5728; shared_ptr &#x7684;&#x6784;&#x9020;&#x51FD;&#x6570;&#x4E2D;&#xFF0C;this &#x7684;&#x7C7B;&#x578B;&#x5C31;&#x662F; shared_ptr<widget>&#xFF0C;&#x6240;&#x4EE5;&#x4ECE;&#x903B;&#x8F91;&#x4E0A;&#x5206;&#x6790;&#xFF0C;&#x6211;&#x4EEC;&#x751A;&#x81F3;&#x53EF;&#x4EE5;&#x8FD9;&#x6837;&#x53BB;&#x5B9E;&#x73B0;
+shared_from_this &#x51FD;&#x6570;</widget></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// &#x4E0B;&#x9762;&#x6240;&#x6709;&#x7684;&#x4EE3;&#x7801;&#x7701;&#x53BB;&#x6A21;&#x677F;&#x76F8;&#x5173;&#x7684;&#x4EE3;&#x7801;&#xFF0C;&#x4EE5;&#x4FBF;&#x9605;&#x8BFB;&#x3002;</span></div><div class="line"></div><div class="line"><span class="keyword">class</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt; {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">explicit</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt;(Widget* w) {</div><div class="line">        <span class="comment">// &#x5176;&#x4ED6;&#x521D;&#x59CB;&#x5316;&#xFF0C;&#x53EF;&#x80FD;&#x5728;&#x521D;&#x59CB;&#x5316;&#x5217;&#x8868;&#x4E2D;&#x800C;&#x4E0D;&#x662F;&#x6784;&#x9020;&#x51FD;&#x6570;&#x5185;&#x90E8;</span></div><div class="line">        RegisterSharedPtr(w, <span class="keyword">this</span>);</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">RegisterSharedPtr</span><span class="params">(Widget* w, <span class="built_in">shared_ptr</span>&lt;Widget&gt;* sp)</span> </span>{</div><div class="line">    <span class="comment">// &#x5EFA;&#x7ACB; w &#x5230; sp &#x7684;&#x6620;&#x5C04;&#x5173;&#x7CFB;</span></div><div class="line">}</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">GetSharedPtr</span><span class="params">(Widget* w)</span> </span>{</div><div class="line">    <span class="comment">// &#x67E5;&#x627E; w &#x5BF9;&#x5E94;&#x7684; sp</span></div><div class="line">}</div><div class="line"></div><div class="line"><span class="keyword">class</span> Widget {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="built_in">shared_ptr</span>&lt;Widget&gt; shared_from_this() {</div><div class="line">        GetSharedPtr(<span class="keyword">this</span>);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+<h1 id="jian-li-w-he-sp-zhi-jian-de-ying-she-guan-xi">&#x5EFA;&#x7ACB; w &#x548C; sp &#x4E4B;&#x95F4;&#x7684;&#x6620;&#x5C04;&#x5173;&#x7CFB;</h1>
+<p>&#x5EFA;&#x7ACB; w &#x548C; sp &#x7684;&#x5173;&#x7CFB;&#x6700;&#x76F4;&#x63A5;&#x7684;&#x65B9;&#x5F0F;&#x662F;&#x4F7F;&#x7528;&#x4E00;&#x4E2A; map &#x6765;&#x96C6;&#x4E2D;&#x7BA1;&#x7406;&#xFF0C;&#x53E6;&#x4E00;&#x79CD;&#x65B9;&#x5F0F;&#x5C31;&#x662F;&#x91C7;&#x7528;&#x5206;&#x5E03;&#x5F0F;&#x7684;&#x7BA1;&#x7406;&#x65B9;&#x5F0F;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;&#x8BA9; w &#x76F4;&#x63A5;&#x5B58;&#x50A8;&#x8FD9;&#x4E2A; sp&#xFF0C;&#x800C;&#x4E0D;&#x7528;&#x501F;&#x52A9;&#x989D;&#x5916;&#x7684; map&#x3002;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt; {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">explicit</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt;(Widget* w) {</div><div class="line">        <span class="comment">// &#x5176;&#x4ED6;&#x521D;&#x59CB;&#x5316;</span></div><div class="line">        <span class="keyword">if</span> (w) {</div><div class="line">            w-&gt;SetSharedPtr(<span class="keyword">this</span>);</div><div class="line">        }</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> Widget {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetSharedPtr</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;Widget&gt;* sp)</span> </span>{</div><div class="line">        sp_ = *sp;</div><div class="line">    }</div><div class="line"></div><div class="line">    <span class="built_in">shared_ptr</span>&lt;Widget&gt; GetPtr() {</div><div class="line">        <span class="keyword">return</span> sp_;</div><div class="line">    }</div><div class="line"></div><div class="line"><span class="keyword">private</span>:</div><div class="line">    <span class="built_in">shared_ptr</span>&lt;Widget&gt; sp_;</div><div class="line">};</div></pre></td></tr></table></figure>
+<h1 id="chou-xiang-gong-gong-ji-lei">&#x62BD;&#x8C61;&#x516C;&#x5171;&#x57FA;&#x7C7B;</h1>
+<p>&#x4E0A;&#x9762;&#x7684;&#x8BBE;&#x8BA1;&#x7684;&#x6700;&#x5927;&#x7684;&#x95EE;&#x9898;&#x662F;&#xFF0C;&#x4F60;&#x9700;&#x8981;&#x5728;&#x81EA;&#x5DF1;&#x7684;&#x5185;&#x90E8;&#x5B9A;&#x4E49;&#x4E00;&#x4E2A; shared_ptr &#x7C7B;&#x578B;&#x7684;&#x6210;&#x5458;&#x53D8;&#x91CF;&#x4EE5;&#x53CA;&#x63D0;&#x4F9B;&#x4E00;&#x4E2A; GetPtr &#x548C; SetSharedPtr &#x6210;&#x5458;&#x65B9;&#x6CD5;&#xFF0C;&#x8FD9;&#x4E9B;&#x4EE3;&#x7801;&#x548C; Widget &#x7C7B;&#x7684;&#x4E1A;&#x52A1;&#x903B;&#x8F91;&#x53EF;&#x80FD;&#x6CA1;&#x6709;&#x592A;&#x5927;&#x7684;&#x5173;&#x7CFB;&#xFF0C;&#x800C;&#x4E14;&#x4E0D;&#x9002;&#x5408;&#x91CD;&#x7528;&#x3002;&#x4E3A;&#x4E86;&#x62BD;&#x8C61;&#x5E76;&#x91CD;&#x7528;&#x8FD9;&#x4E9B;&#x4EE3;&#x7801;&#xFF0C;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x62BD;&#x8C61;&#x51FA;&#x4E00;&#x4E2A;&#x516C;&#x5171;&#x7684;&#x57FA;&#x7C7B;&#xFF0C;&#x8FD9;&#x4E5F;&#x5C31;&#x662F; std::enable_shared_from_this &#x5B9E;&#x9645;&#x4E0A;&#x505A;&#x7684;&#x4E8B;&#x60C5;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> enable_shared_from_this {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetSharedPtr</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;Widget&gt;* sp)</span> </span>{</div><div class="line">        sp_ = *sp;</div><div class="line">    }</div><div class="line"></div><div class="line">    <span class="built_in">shared_ptr</span>&lt;Widget&gt; GetPtr() {</div><div class="line">        <span class="keyword">return</span> sp_;</div><div class="line">    }</div><div class="line"></div><div class="line"><span class="keyword">private</span>:</div><div class="line">    <span class="built_in">shared_ptr</span>&lt;Widget&gt; sp_;</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> Widget : <span class="keyword">public</span> enable_shared_from_this {</div><div class="line">};</div><div class="line"></div><div class="line"><span class="keyword">class</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt; {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">explicit</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt;(Widget* w) {</div><div class="line">         w-&gt;SetSharedPtr(<span class="keyword">this</span>);</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+<p>&#x4E0A;&#x9762;&#x8FD9;&#x6BB5;&#x4EE3;&#x7801;&#x6700;&#x5927;&#x7684;&#x6F0F;&#x6D1E;&#x5728;&#x4E8E;&#xFF0C;shared_ptr &#x662F;&#x4E00;&#x4E2A;&#x6A21;&#x677F;&#xFF0C;&#x5B83;&#x5E76;&#x4E0D;&#x77E5;&#x9053; Widget &#x7C7B;&#x662F;&#x5426;&#x7EE7;&#x627F;&#x81EA; enable_shared_from_this&#xFF0C;&#x6240;&#x4EE5; <code>w-&gt;SetSharedPtr(this)</code> &#x8FD9;&#x4E00;&#x53E5;&#x7684;&#x8C03;&#x7528;&#x4E0D;&#x5B8C;&#x5168;&#x6B63;&#x786E;&#x3002;boost &#x4E2D;&#x89E3;&#x51B3;&#x8FD9;&#x4E2A;&#x95EE;&#x9898;&#x4F7F;&#x7528;&#x4E86;&#x4E00;&#x4E2A;&#x975E;&#x5E38;&#x5DE7;&#x5999;&#x7684;&#x65B9;&#x6CD5;&#x2014;&#x2014;&#x91CD;&#x8F7D;&#xFF0C;&#x901A;&#x8FC7;&#x91CD;&#x8F7D;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x8BA9;&#x7F16;&#x8BD1;&#x5668;&#x81EA;&#x52A8;&#x9009;&#x62E9;&#x662F;&#x5426;&#x8C03;&#x7528; SetSharedPtr&#x3002;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt; {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="keyword">explicit</span> <span class="built_in">shared_ptr</span>&lt;Widget&gt;(Widget* w) {</div><div class="line">        SetSharedPtr(<span class="keyword">this</span>, w);</div><div class="line">    }</div><div class="line">};</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">SetSharedPtr</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;Widget&gt;* sp, enable_shared_from_this* w)</span> </span>{</div><div class="line">    w-&gt;SetSharedPtr(sp);</div><div class="line">}</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">SetSharedPtr</span><span class="params">(...)</span> </span>{</div><div class="line">    <span class="comment">// &#x4EC0;&#x4E48;&#x4E5F;&#x4E0D;&#x505A;</span></div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x6BB5;&#x4EE3;&#x7801;&#x7684;&#x7CBE;&#x5999;&#xFF0C;&#x8BA9;&#x4EBA;&#x53F9;&#x4E3A;&#x89C2;&#x6B62;&#x3002;</p>
+<h1 id="zui-hou-yi-ge-wen-ti">&#x6700;&#x540E;&#x4E00;&#x4E2A;&#x95EE;&#x9898;</h1>
+<p>&#x4E0A;&#x9762;&#x8FD9;&#x4E9B;&#x4EE3;&#x7801;&#x7684;&#x903B;&#x8F91;&#x4E0A;&#x662F;&#x6B63;&#x786E;&#x7684;&#xFF0C;&#x4F46;&#x662F;&#x5B9E;&#x9645;&#x4E0A;&#x8FD8;&#x6709;&#x4E00;&#x4E2A;&#x5DE8;&#x5927;&#x7684;BUG&#xFF0C;&#x90A3;&#x5C31;&#x662F; Widget &#x7684;&#x5185;&#x90E8;&#x5B58;&#x5728;&#x4E00;&#x4E2A;&#x6307;&#x5411;&#x5B83;&#x81EA;&#x5DF1;&#x7684; shared_ptr<widget>&#xFF0C;&#x8FD9;&#x610F;&#x5473;&#x7740;&#x4F60;&#x6C38;&#x8FDC;&#x65E0;&#x6CD5;&#x9500;&#x6BC1;&#x6389; Widget&#x3002;&#x9500;&#x6BC1;
+Widget &#x7684;&#x524D;&#x63D0;&#x662F;&#x6CA1;&#x6709; shared_ptr &#x6307;&#x5411;&#x5B83;&#x4E86;&#xFF0C;&#x800C;&#x9500;&#x6BC1; Widget &#x5FC5;&#x7136;&#x9700;&#x8981;&#x9500;&#x6BC1;&#x5B83;&#x7684;&#x6210;&#x5458;&#x53D8;&#x91CF;&#xFF0C;&#x5305;&#x62EC;&#x6307;&#x5411;&#x81EA;&#x8EAB;&#x7684;&#x90A3;&#x4E2A;  shared_ptr&#xFF0C;&#x800C;&#x5B83;&#x7684;&#x5B58;&#x5728;&#x53C8;&#x5426;&#x5B9A;&#x4E86;&#x6211;&#x4EEC;&#x80FD;&#x9500;&#x6BC1; Widget &#x7684;&#x524D;&#x63D0;&#x2014;&#x2014;&#x6CA1;&#x6709; shared_ptr &#x6307;&#x5411;&#x5B83;&#x3002;&#x8FD9;&#x5C31;&#x50CF;&#x662F;&#x4F60;&#x5728;&#x753B;&#x4E86;&#x4E00;&#x4E2A;&#x6307;&#x5411;&#x81EA;&#x8EAB;&#x7684;&#x7BAD;&#x5934;&#xFF0C;&#x5B83;&#x8BA9;&#x4F60;&#x81EA;&#x8EAB;&#x5F62;&#x6210;&#x4E86;&#x5FAA;&#x73AF;&#x4F9D;&#x8D56;&#xFF0C;&#x6C38;&#x8FDC;&#x6CA1;&#x6709;&#x529E;&#x6CD5;&#x8DF3;&#x51FA;&#x6765;&#x3002;</widget></p>
+<p>&#x666E;&#x901A;&#x7684; shared_ptr &#x5FAA;&#x73AF;&#x4F9D;&#x8D56;&#x7684;&#x95EE;&#x9898;&#x7684;&#x5904;&#x7406;&#x901A;&#x5E38;&#x4F7F;&#x7528;&#x7684;&#x662F; weak_ptr&#xFF0C;&#x8FD9;&#x4E00;&#x6B21;&#x4E5F;&#x4E0D;&#x4F8B;&#x5916;&#x3002;&#x6211;&#x4EEC;&#x9700;&#x8981;&#x5B58;&#x50A8;&#x4E00;&#x4E2A; weak_ptr &#x4F5C;&#x4E3A;&#x6210;&#x5458;&#x53D8;&#x91CF;&#xFF0C;&#x800C;&#x4E0D;&#x662F; shared_ptr&#xFF0C;&#x7136;&#x540E;&#x5728;&#x9700;&#x8981;&#x7684;&#x65F6;&#x5019;&#x901A;&#x8FC7;
+weak_ptr &#x6784;&#x5EFA;&#x51FA; shared_ptr&#xFF0C;&#x6240;&#x4EE5;&#x6B63;&#x786E;&#x7684;&#x6253;&#x5F00;&#x65B9;&#x5F0F;&#x662F;&#xFF1A;</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> enable_shared_from_this {</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    SetSharedPtr(<span class="built_in">shared_ptr</span>* sp) {</div><div class="line">        wp = sp</div><div class="line">    }</div><div class="line"></div><div class="line">    <span class="built_in">shared_ptr</span> shared_from_this() {</div><div class="line">        <span class="keyword">return</span> <span class="built_in">shared_ptr</span>(wp);</div><div class="line">    }</div><div class="line"></div><div class="line"><span class="keyword">private</span>:</div><div class="line">    weak_ptr wp;</div><div class="line">}</div></pre></td></tr></table></figure>
+<p>&#x8FD9;&#x662F;&#x4E00;&#x4E2A;&#x63A5;&#x8FD1;&#x6B63;&#x786E;&#x7B54;&#x6848;&#x7684;&#x5199;&#x6CD5;&#xFF0C;&#x4E5F;&#x662F;&#x4E00;&#x4E2A;&#x6BD4;&#x8F83;&#x5BB9;&#x6613;&#x7406;&#x89E3;&#x7684;&#x65B9;&#x6CD5;&#xFF0C;&#x4F46;&#x548C;&#x5B9E;&#x9645;&#x4E0A;&#x7684;&#x5199;&#x6CD5;&#x8FD8;&#x4E00;&#x4E9B;&#x7EC6;&#x5FAE;&#x7684;&#x5DEE;&#x522B;&#xFF0C;&#x6BD4;&#x5982;&#x5B9E;&#x9645;&#x4E0A; SetSharedPtr &#x4E2D;&#x5E76;&#x6CA1;&#x6709;&#x628A; sp &#x76F4;&#x63A5;&#x8D4B;&#x503C;&#x7ED9; wp&#xFF0C;&#x800C;&#x662F;&#x4F7F;&#x7528;&#x4E86;
+shared_ptr &#x7684;<code>&#x522B;&#x540D;&#x6784;&#x9020;&#x51FD;&#x6570;</code>&#xFF0C;&#x4E3A;&#x4EC0;&#x4E48;&#x8FD9;&#x4E48;&#x5199;&#xFF0C;&#x4E2A;&#x4EBA;&#x80FD;&#x529B;&#x6709;&#x9650;&#xFF0C;&#x8FD8;&#x6CA1;&#x5F04;&#x6E05;&#x695A;&#xFF0C;&#x5F04;&#x61C2;&#x4E86;&#x518D;&#x56DE;&#x6765;&#x8865;&#x5145;&#x3002;</p>
+<h1 id="boost-de-yuan-ma-pian-duan">boost &#x7684;&#x6E90;&#x7801;&#x7247;&#x6BB5;</h1>
+<p>&#x4E0A;&#x9762;&#x7684;&#x6240;&#x6709;&#x4EE3;&#x7801;&#x90FD;&#x662F;&#x4E2A;&#x4EBA;&#x6309;&#x7167;&#x81EA;&#x5DF1;&#x7684;&#x7406;&#x89E3;&#x5199;&#x51FA;&#x6765;&#x7684;&#xFF0C;&#x4E3A;&#x4E86;&#x65B9;&#x4FBF;&#x7406;&#x89E3;&#xFF0C;&#x8FD9;&#x91CC;&#x7ED9;&#x51FA; boost &#x7684;&#x76F8;&#x5173;&#x6E90;&#x7801;&#x7247;&#x6BB5;&#xFF0C;&#x4EE5;&#x4F9B;&#x5BF9;&#x6BD4;&#x53C2;&#x8003;&#xFF08;&#x9700;&#x8981;&#x6CE8;&#x610F;&#x7684;&#x662F; pn &#x548C;&#x5F15;&#x7528;&#x6280;&#x672F;&#x6709;&#x5173;&#xFF0C;&#x4F46;&#x662F;&#x548C;&#x8FD9;&#x91CC;&#x8BA8;&#x8BBA;&#x7684;
+enable_shared_from_this &#x6CA1;&#x6709;&#x592A;&#x5927;&#x7684;&#x5173;&#x8054;&#xFF0C;&#x4F60;&#x53EF;&#x4EE5;&#x5FFD;&#x7565;&#x5B83;&#xFF09;&#xFF1A;</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">template&lt;class T&gt; class shared_ptr</div><div class="line">{</div><div class="line">    template&lt;class Y&gt;</div><div class="line">    explicit shared_ptr( Y * p ): px( p ), pn() // Y must be complete</div><div class="line">    {</div><div class="line">        boost::detail::sp_pointer_construct( this, p, pn );</div><div class="line">    }</div><div class="line">};</div></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> T, <span class="keyword">class</span> Y &gt; <span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">sp_pointer_construct</span><span class="params">( boost::<span class="built_in">shared_ptr</span>&lt; T &gt; * ppx, Y * p, boost::detail::shared_count &amp; pn )</span></span></div><div class="line">{</div><div class="line">    boost::detail::shared_count( p ).swap( pn );</div><div class="line">    boost::detail::sp_enable_shared_from_this( ppx, p, p );</div><div class="line">}</div></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> X, <span class="keyword">class</span> Y, <span class="keyword">class</span> T &gt; <span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">sp_enable_shared_from_this</span><span class="params">( boost::<span class="built_in">shared_ptr</span>&lt;X&gt; <span class="keyword">const</span> * ppx, Y <span class="keyword">const</span> * py, boost::enable_shared_from_this&lt; T &gt; <span class="keyword">const</span> * pe )</span></span></div><div class="line">{</div><div class="line">    <span class="keyword">if</span>( pe != <span class="number">0</span> )</div><div class="line">    {</div><div class="line">        pe-&gt;_internal_accept_owner( ppx, <span class="keyword">const_cast</span>&lt; Y* &gt;( py ) );</div><div class="line">    }</div><div class="line">}</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">sp_enable_shared_from_this</span><span class="params">( ... )</span></span></div><div class="line">{</div><div class="line">}</div></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt; <span class="keyword">class</span> enable_shared_from_this</div><div class="line">{</div><div class="line"><span class="keyword">public</span>:</div><div class="line"></div><div class="line">    <span class="built_in">shared_ptr</span>&lt;T&gt; shared_from_this()</div><div class="line">    {</div><div class="line">        <span class="built_in">shared_ptr</span>&lt;T&gt; p( weak_this_ );</div><div class="line">        BOOST_ASSERT( p.get() == <span class="keyword">this</span> );</div><div class="line">        <span class="keyword">return</span> p;</div><div class="line">    }</div><div class="line"><span class="keyword">public</span>: <span class="comment">// actually private, but avoids compiler template friendship issues</span></div><div class="line"></div><div class="line">    <span class="comment">// Note: invoked automatically by shared_ptr; do not call</span></div><div class="line">    <span class="keyword">template</span>&lt;<span class="keyword">class</span> X, <span class="keyword">class</span> Y&gt; <span class="keyword">void</span> _internal_accept_owner( <span class="built_in">shared_ptr</span>&lt;X&gt; <span class="keyword">const</span> * ppx, Y * py ) <span class="keyword">const</span></div><div class="line">    {</div><div class="line">        <span class="keyword">if</span>( weak_this_.expired() )</div><div class="line">        {</div><div class="line">            weak_this_ = <span class="built_in">shared_ptr</span>&lt;T&gt;( *ppx, py );</div><div class="line">        }</div><div class="line">    }</div><div class="line"></div><div class="line"><span class="keyword">private</span>:</div><div class="line"></div><div class="line">    <span class="keyword">mutable</span> weak_ptr&lt;T&gt; weak_this_;</div><div class="line">};</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C-CPP/" rel="tag"># C/CPP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/24/android-jni-tips-md/" rel="next" title="Android JNI 使用总结">
+                <i class="fa fa-chevron-left"></i> Android JNI 使用总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/img/avatar.jpg"
+               alt="郭荣飞" />
+          <p class="site-author-name" itemprop="name">郭荣飞</p>
+          <p class="site-description motion-element" itemprop="description">记录成长路上的点点滴滴</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">83</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#bi-mian-duo-ge-du-li-de-shared-ptr-zhi-xiang-tong-yi-fen-zi-yuan"><span class="nav-number">1.</span> <span class="nav-text">避免多个独立的 shared_ptr 指向同一份资源</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ru-he-gong-xiang-make-shared-de-fan-hui-de-zi-yuan"><span class="nav-number">2.</span> <span class="nav-text">如何共享 make_shared 的返回的资源</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#jian-li-w-he-sp-zhi-jian-de-ying-she-guan-xi"><span class="nav-number">3.</span> <span class="nav-text">建立 w 和 sp 之间的映射关系</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#chou-xiang-gong-gong-ji-lei"><span class="nav-number">4.</span> <span class="nav-text">抽象公共基类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zui-hou-yi-ge-wen-ti"><span class="nav-number">5.</span> <span class="nav-text">最后一个问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#boost-de-yuan-ma-pian-duan"><span class="nav-number">6.</span> <span class="nav-text">boost 的源码片段</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">郭荣飞</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
